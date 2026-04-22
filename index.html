@@ -1,1615 +1,1199 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Conflict Style Research</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 
-  <!-- ══ CONFIGURATION — edit these before deploying ══════════════════════════
-       Supabase: create a project at supabase.com, copy URL and anon key below.
-       studyId:  change per Prolific study batch so you can filter results.
-       completionCode: set to whatever Prolific gives you (or you set on Prolific).
-       prolificRedirect: leave as-is; Prolific's standard completion URL.
-  ═══════════════════════════════════════════════════════════════════════════ -->
   <script>
     window.CFG = {
-      supabaseUrl:       'https://nyzmrzbhwgcqgqulmiep.supabase.co',
-      supabaseKey:       'sb_publishable_znSdZeWnGFPfejwcgubacg_mrOG-ZGB',
-      studyId:           'study_001',
-      prolificParam:     'PROLIFIC_PID',     // Prolific injects this
-      ccParam:           'cc',               // completion code URL param
-      instrumentParam:   'instrument',       // 'ranking'|'pit'|'hybrid'|'slider'
-      prolificRedirect:  'https://app.prolific.com/submissions/complete',
+      supabaseUrl:      'YOUR_SUPABASE_URL',
+      supabaseKey:      'YOUR_SUPABASE_ANON_KEY',
+      studyId:          'study_001',
+      prolificParam:    'PROLIFIC_PID',
+      ccParam:          'cc',
+      instrumentParam:  'instrument',
+      prolificRedirect: 'https://app.prolific.com/submissions/complete',
     };
   </script>
 
   <style>
+    /* ══ TOKENS ══════════════════════════════════════════════════════════════ */
     :root {
-      --bg:          #F4F1EC;
-      --surface:     #FFFFFF;
-      --surface-2:   #EDE9E2;
-      --border:      #DDD9D0;
-      --text:        #1C1A17;
-      --text-2:      #4C4840;
-      --text-3:      #9A948A;
-      --accent:      #376E63;
-      --accent-bg:   #EBF3F1;
-      --accent-dark: #27524A;
-      --amber:       #B06A28;
-      --amber-bg:    #FDF3E7;
-      --radius:      12px;
-      --shadow:      0 2px 20px rgba(28,26,23,0.07);
-      --font-h:      'Libre Baskerville', Georgia, serif;
-      --font-b:      'DM Sans', system-ui, sans-serif;
+      --bg:          #EDEAF6;
+      --bg-grad:     radial-gradient(ellipse at 55% -10%, rgba(91,79,232,0.1) 0%, transparent 60%), #EDEAF6;
+      --surface:     #F8F7FF;
+      --surface-2:   #E4E0F4;
+      --surface-3:   #D8D3ED;
+      --text:        #1A1830;
+      --text-2:      #4A4668;
+      --text-3:      #8E8AAE;
+      --accent:      #5B4FE8;
+      --accent-bg:   #ECEAFD;
+      --accent-dark: #4338CA;
+      --amber:       #C2690A;
+      --amber-bg:    #FEF0DC;
+      --shadow-sm:   0 1px 3px rgba(26,24,48,0.06), 0 2px 10px rgba(26,24,48,0.05);
+      --shadow-md:   0 2px 6px rgba(26,24,48,0.07), 0 4px 20px rgba(26,24,48,0.07);
+      --shadow-lg:   0 4px 14px rgba(26,24,48,0.08), 0 8px 36px rgba(26,24,48,0.08);
+      --border:      rgba(26,24,48,0.09);
+      --radius:      14px;
+      --font:        'Plus Jakarta Sans', system-ui, sans-serif;
+      --ease:        cubic-bezier(0.4,0,0.2,1);
     }
+    [data-theme="dark"] {
+      --bg:          #0E0D1B;
+      --bg-grad:     radial-gradient(ellipse at 55% -10%, rgba(124,111,245,0.15) 0%, transparent 60%), #0E0D1B;
+      --surface:     #18162A;
+      --surface-2:   #221F36;
+      --surface-3:   #2C2842;
+      --text:        #F0EEFF;
+      --text-2:      #B6B2D6;
+      --text-3:      #68648C;
+      --accent:      #7C70F5;
+      --accent-bg:   #231F4A;
+      --accent-dark: #9B92F8;
+      --amber:       #F59E0B;
+      --amber-bg:    #271D06;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,0.3), 0 2px 10px rgba(0,0,0,0.2);
+      --shadow-md:   0 2px 6px rgba(0,0,0,0.35), 0 4px 20px rgba(0,0,0,0.25);
+      --shadow-lg:   0 4px 14px rgba(0,0,0,0.4), 0 8px 36px rgba(0,0,0,0.3);
+      --border:      rgba(255,255,255,0.07);
+    }
+
+    /* ══ RESET ═══════════════════════════════════════════════════════════════ */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
     body {
-      background: var(--bg);
+      background: var(--bg-grad);
+      background-attachment: fixed;
       color: var(--text);
-      font-family: var(--font-b);
+      font-family: var(--font);
       font-size: 16px;
       line-height: 1.65;
       min-height: 100vh;
+      transition: background 0.3s var(--ease), color 0.3s var(--ease);
     }
 
-    /* ── Layout ─────────────────────────────────────────────────────────── */
-    .shell { max-width: 600px; margin: 0 auto; padding: 2.5rem 1.5rem 6rem; }
-
-    /* ── Progress rail ──────────────────────────────────────────────────── */
-    #progress-rail {
-      position: fixed; top: 0; left: 0; right: 0; height: 3px;
-      background: var(--border); z-index: 200;
+    /* ══ FIXED TOGGLE BUTTONS ════════════════════════════════════════════════ */
+    .fix-btn {
+      position: fixed; top: 1rem; z-index: 500;
+      width: 44px; height: 44px; border-radius: 50%;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      box-shadow: var(--shadow-md);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      transition: transform 0.15s, box-shadow 0.15s, background 0.3s var(--ease), border-color 0.3s var(--ease);
     }
-    #progress-fill {
-      height: 100%; background: var(--accent);
-      transition: width 0.5s ease; width: 0%;
-    }
+    .fix-btn:hover { transform: scale(1.1); box-shadow: var(--shadow-lg); }
+    #theme-btn  { right: 1rem; }
+    #layout-btn { right: 3.5rem; font-size: 1rem; }
 
-    /* ── Typography ─────────────────────────────────────────────────────── */
-    h1 { font-family: var(--font-h); font-size: 2rem; font-weight: 700; line-height: 1.2; margin-bottom: 1rem; }
-    h2 { font-family: var(--font-h); font-size: 1.45rem; font-weight: 700; line-height: 1.3; margin-bottom: 0.75rem; }
-    h3 { font-family: var(--font-h); font-size: 1.05rem; margin-bottom: 0.4rem; }
+    /* Mobile layout banner */
+    #mobile-banner {
+      display: none;
+      background: var(--amber-bg); border: 1.5px solid rgba(194,105,10,0.2);
+      border-radius: var(--radius); padding: 0.85rem 1rem;
+      font-size: 0.83rem; color: var(--text-2); margin-bottom: 1.5rem;
+      line-height: 1.6;
+    }
+    #mobile-banner strong { color: var(--amber); }
+    #mobile-banner.show { display: block; }
+
+    /* ══ LAYOUT ══════════════════════════════════════════════════════════════ */
+    .shell { max-width: 680px; margin: 0 auto; padding: 2.75rem 1.5rem 6rem; }
+
+    /* ══ GLOBAL PROGRESS RAIL ════════════════════════════════════════════════ */
+    #rail { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: var(--surface-2); z-index: 200; }
+    #rail-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-dark)); transition: width 0.5s var(--ease); width: 0%; }
+
+    /* ══ TYPE ════════════════════════════════════════════════════════════════ */
+    h1 { font-size: 2.1rem; font-weight: 800; line-height: 1.15; margin-bottom: 1rem; letter-spacing: -0.025em; }
+    h2 { font-size: 1.55rem; font-weight: 700; line-height: 1.25; margin-bottom: 0.75rem; letter-spacing: -0.02em; }
+    h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.4rem; letter-spacing: -0.01em; }
     p  { color: var(--text-2); margin-bottom: 1rem; line-height: 1.75; }
     p:last-child { margin-bottom: 0; }
     strong { color: var(--text); font-weight: 600; }
+    .eyebrow { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem; display: block; }
 
-    .eyebrow {
-      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em;
-      text-transform: uppercase; color: var(--accent);
-      margin-bottom: 1rem; display: block;
-    }
-
-    /* ── Buttons ────────────────────────────────────────────────────────── */
+    /* ══ BUTTONS ═════════════════════════════════════════════════════════════ */
     .btn {
       display: inline-flex; align-items: center; justify-content: center;
       border: none; border-radius: var(--radius); cursor: pointer;
-      font-family: var(--font-b); font-weight: 600; font-size: 0.9rem;
-      transition: all 0.15s; text-decoration: none; gap: 0.4rem;
+      font-family: var(--font); font-weight: 700; font-size: 0.9rem;
+      transition: all 0.15s var(--ease); text-decoration: none; gap: 0.4rem; letter-spacing: -0.01em;
     }
-    .btn-primary {
-      background: var(--accent); color: #fff;
-      padding: 0.85rem 2rem;
-    }
-    .btn-primary:hover  { background: var(--accent-dark); transform: translateY(-1px); }
+    .btn-primary { background: var(--accent); color: #fff; padding: 0.88rem 2rem; box-shadow: 0 2px 14px rgba(91,79,232,0.38); }
+    .btn-primary:hover  { background: var(--accent-dark); transform: translateY(-2px); box-shadow: 0 4px 22px rgba(91,79,232,0.48); }
     .btn-primary:active { transform: translateY(0); }
-    .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
-    .btn-outline {
-      background: transparent; color: var(--text-3);
-      border: 1.5px solid var(--border); padding: 0.75rem 1.5rem;
-    }
-    .btn-outline:hover { color: var(--text); border-color: var(--text-3); }
-    .btn-lg { padding: 1rem 2.25rem; font-size: 1rem; }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+    [data-theme="dark"] .btn-primary { box-shadow: 0 2px 14px rgba(124,111,245,0.45); }
+    [data-theme="dark"] .btn-primary:hover { box-shadow: 0 4px 22px rgba(124,111,245,0.58); }
+    .btn-ghost { background: var(--surface); color: var(--text-3); border: 1.5px solid var(--border); padding: 0.78rem 1.5rem; box-shadow: var(--shadow-sm); }
+    .btn-ghost:hover { color: var(--text); box-shadow: var(--shadow-md); }
+    .btn-lg { padding: 1rem 2.5rem; font-size: 1rem; }
     .btn-row { display: flex; gap: 0.75rem; align-items: center; margin-top: 1.75rem; flex-wrap: wrap; }
     .btn-row.end   { justify-content: flex-end; }
     .btn-row.apart { justify-content: space-between; }
 
-    /* ── Inputs ─────────────────────────────────────────────────────────── */
-    label.field-label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-3); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 0.5rem; }
-    input.field {
-      width: 100%; padding: 0.85rem 1rem;
-      border: 2px solid var(--border); border-radius: var(--radius);
-      font-family: var(--font-b); font-size: 0.95rem; color: var(--text);
-      background: var(--surface); outline: none; transition: border-color 0.2s;
+    /* ══ INPUTS ══════════════════════════════════════════════════════════════ */
+    label.lbl { display: block; font-size: 0.72rem; font-weight: 700; color: var(--text-3); letter-spacing: 0.09em; text-transform: uppercase; margin-bottom: 0.5rem; }
+    input.inp, textarea.inp {
+      width: 100%; padding: 0.9rem 1rem;
+      border: 1.5px solid var(--border); border-radius: var(--radius);
+      font-family: var(--font); font-size: 0.95rem; color: var(--text);
+      background: var(--surface); box-shadow: var(--shadow-sm);
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s;
     }
-    input.field:focus { border-color: var(--accent); }
-    textarea.field { resize: vertical; min-height: 90px; line-height: 1.65; }
+    input.inp:focus, textarea.inp:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(91,79,232,0.13), var(--shadow-sm); }
+    textarea.inp { resize: vertical; min-height: 90px; line-height: 1.65; }
 
-    /* ── Cards ──────────────────────────────────────────────────────────── */
-    .card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.5rem;
-    }
-    .card + .card { margin-top: 0.75rem; }
-
-    /* ── Screens ────────────────────────────────────────────────────────── */
+    /* ══ SCREENS ═════════════════════════════════════════════════════════════ */
     .screen { display: none; }
-    .screen.active { display: block; animation: rise 0.3s ease; }
+    .screen.active { display: block; animation: rise 0.28s var(--ease); }
     @keyframes rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 
-    /* ── Progress bar (per-instrument) ─────────────────────────────────── */
-    .q-rail { background: var(--border); border-radius: 4px; height: 3px; margin-bottom: 0.5rem; }
-    .q-fill { height: 3px; background: var(--accent); border-radius: 4px; transition: width 0.35s ease; }
-    .q-label { display: flex; justify-content: space-between; font-size: 0.73rem; color: var(--text-3); margin-bottom: 1.5rem; }
+    /* ══ Q PROGRESS (per-instrument) ═════════════════════════════════════════ */
+    .q-rail  { background: var(--surface-2); border-radius: 4px; height: 3px; margin-bottom: 0.5rem; }
+    .q-fill  { height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent-dark)); border-radius: 4px; transition: width 0.35s var(--ease); }
+    .q-meta  { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-3); margin-bottom: 1.75rem; font-weight: 600; }
+    .q-prompt { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3); margin-bottom: 1.2rem; opacity: 0.7; }
 
-    /* ── TKI / Forced-choice ────────────────────────────────────────────── */
+    /* ══ CHOICE CARDS ════════════════════════════════════════════════════════ */
     .choice {
-      background: var(--surface); border: 2px solid var(--border);
-      border-radius: var(--radius); padding: 1.1rem 1.25rem;
-      cursor: pointer; transition: all 0.15s;
-      display: flex; align-items: flex-start; gap: 0.85rem; margin-bottom: 0.6rem;
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: var(--radius); padding: 1.15rem 1.3rem; cursor: pointer;
+      transition: all 0.14s var(--ease);
+      display: flex; align-items: flex-start; gap: 0.9rem; margin-bottom: 0.65rem;
+      box-shadow: var(--shadow-sm);
     }
-    .choice:hover { border-color: var(--accent); background: var(--accent-bg); }
-    .choice.sel   { border-color: var(--accent); background: var(--accent-bg); }
-    .choice.unsel { opacity: 0.35; }
-    .choice-ltr {
-      font-family: var(--font-h); font-size: 0.8rem; font-weight: 700;
-      color: var(--accent); min-width: 18px; padding-top: 2px;
-    }
-    .choice-txt { font-size: 0.93rem; color: var(--text-2); line-height: 1.55; }
-    .q-prompt { font-family: var(--font-h); font-size: 0.95rem; color: var(--text-2); font-style: italic; margin-bottom: 1.25rem; }
+    .choice:hover  { border-color: var(--accent); background: var(--accent-bg); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    .choice.sel    { border-color: var(--accent); background: var(--accent-bg); box-shadow: 0 0 0 3px rgba(91,79,232,0.13), var(--shadow-sm); }
+    .choice.unsel  { opacity: 0.3; }
+    .choice-ltr    { font-size: 0.72rem; font-weight: 800; color: var(--accent); min-width: 18px; padding-top: 3px; letter-spacing: 0.03em; }
+    .choice-txt    { font-size: 0.96rem; color: var(--text-2); line-height: 1.6; }
 
-    /* ── Instrument selector ────────────────────────────────────────────── */
-    .instrument-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1.25rem 0; }
+    /* ══ INSTRUMENT CARDS ════════════════════════════════════════════════════ */
+    .inst-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1.25rem 0; }
     .i-card {
-      background: var(--surface); border: 2px solid var(--border);
-      border-radius: var(--radius); padding: 1.25rem; cursor: pointer;
-      transition: all 0.2s; text-align: left;
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: var(--radius); padding: 1.3rem; cursor: pointer;
+      transition: all 0.18s var(--ease); box-shadow: var(--shadow-sm);
     }
-    .i-card:hover { border-color: var(--accent); }
-    .i-card.sel   { border-color: var(--accent); background: var(--accent-bg); }
-    .i-icon  { font-size: 1.6rem; margin-bottom: 0.5rem; }
-    .i-name  { font-family: var(--font-h); font-size: 0.9rem; font-weight: 700; color: var(--text); margin-bottom: 0.2rem; }
-    .i-desc  { font-size: 0.76rem; color: var(--text-3); line-height: 1.45; }
-    .i-time  { font-size: 0.68rem; color: var(--accent); font-weight: 700; margin-top: 0.4rem; letter-spacing: 0.04em; }
+    .i-card:hover { border-color: var(--accent); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .i-card.sel   { border-color: var(--accent); background: var(--accent-bg); box-shadow: 0 0 0 3px rgba(91,79,232,0.13), var(--shadow-sm); }
+    .i-ico  { font-size: 1.55rem; margin-bottom: 0.55rem; }
+    .i-name { font-size: 0.9rem; font-weight: 700; color: var(--text); margin-bottom: 0.2rem; letter-spacing: -0.01em; }
+    .i-desc { font-size: 0.75rem; color: var(--text-3); line-height: 1.5; }
+    .i-time { font-size: 0.65rem; color: var(--accent); font-weight: 800; margin-top: 0.45rem; letter-spacing: 0.06em; text-transform: uppercase; }
 
-    /* ── Ranking (drag-sort) ────────────────────────────────────────────── */
+    /* ══ RANKING ═════════════════════════════════════════════════════════════ */
     .rank-list { margin: 1rem 0; list-style: none; }
     .rank-item {
       background: var(--surface); border: 1.5px solid var(--border);
-      border-radius: var(--radius); padding: 0.9rem 1.1rem;
-      margin-bottom: 0.5rem; cursor: grab;
-      display: flex; align-items: center; gap: 0.85rem;
-      transition: all 0.15s; user-select: none;
+      border-radius: var(--radius); padding: 0.95rem 1.15rem; margin-bottom: 0.5rem;
+      cursor: grab; display: flex; align-items: center; gap: 0.9rem;
+      transition: all 0.14s var(--ease); user-select: none; box-shadow: var(--shadow-sm);
     }
-    .rank-item.dragging  { opacity: 0.5; border-style: dashed; cursor: grabbing; }
+    .rank-item:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    .rank-item.dragging  { opacity: 0.45; border-style: dashed; cursor: grabbing; transform: scale(1.02); }
     .rank-item.drag-over { border-color: var(--accent); background: var(--accent-bg); }
-    .rank-n   { font-family: var(--font-h); font-size: 0.95rem; font-weight: 700; color: var(--accent); min-width: 22px; }
-    .rank-handle { color: var(--text-3); font-size: 0.85rem; }
-    .rank-name { font-weight: 600; font-size: 0.88rem; color: var(--text); }
-    .rank-blurb { font-size: 0.78rem; color: var(--text-3); margin-top: 0.1rem; }
+    .rank-n     { font-size: 0.95rem; font-weight: 800; color: var(--accent); min-width: 22px; }
+    .rank-grip  { color: var(--text-3); font-size: 0.9rem; }
+    .rank-name  { font-weight: 700; font-size: 0.88rem; color: var(--text); letter-spacing: -0.01em; }
+    .rank-blurb { font-size: 0.76rem; color: var(--text-3); margin-top: 0.1rem; }
 
-    /* ── Pit ────────────────────────────────────────────────────────────── */
-    .pit-meta { text-align: center; font-size: 0.75rem; color: var(--text-3); margin-bottom: 1.25rem; }
+    /* ══ PIT ═════════════════════════════════════════════════════════════════ */
+    .pit-wrap { position: relative; margin: 1rem 0; }
+    .pit-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+    }
     .pit-opt {
-      background: var(--surface); border: 2px solid var(--border);
-      border-radius: var(--radius); padding: 1.25rem 1.5rem;
-      cursor: pointer; transition: all 0.15s;
-      font-size: 0.93rem; color: var(--text-2); line-height: 1.6;
-      margin-bottom: 0.65rem;
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: var(--radius); padding: 1.5rem 1.25rem; cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, transform 0.18s, opacity 0.18s;
+      box-shadow: var(--shadow-sm);
+      display: flex; flex-direction: column; min-height: 180px;
     }
-    .pit-opt:hover { border-color: var(--accent); background: var(--accent-bg); }
-    .pit-opt.sel   { border-color: var(--accent); background: var(--accent-bg); }
-    .pit-opt.unsel { opacity: 0.35; }
-    .pit-vs-divider { text-align: center; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.18em; color: var(--text-3); margin: 0.25rem 0; }
-
-    /* ── Hybrid Likert ──────────────────────────────────────────────────── */
-    .likert-pair {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 1.25rem;
-      margin-bottom: 0.75rem;
+    .pit-opt:hover { border-color: var(--accent); background: var(--accent-bg); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .pit-opt.sel     { border-color: var(--accent); background: var(--accent-bg); box-shadow: 0 0 0 3px rgba(91,79,232,0.13), var(--shadow-sm); }
+    .pit-opt.winning { border-color: var(--accent); background: var(--accent-bg); box-shadow: 0 0 0 3px rgba(91,79,232,0.18), var(--shadow-md); }
+    .pit-opt.losing  { opacity: 0.28; transform: scale(0.97); }
+    .pit-opt.unsel   { opacity: 0.3; }
+    .pit-opt-lbl {
+      font-size: 0.63rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.12em; color: var(--text-3); margin-bottom: 0.75rem;
     }
-    .likert-pair-lbl { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 0.85rem; }
-    .likert-row { margin-bottom: 0.85rem; }
-    .likert-row:last-child { margin-bottom: 0; }
-    .likert-stmt { font-size: 0.88rem; color: var(--text-2); margin-bottom: 0.5rem; line-height: 1.5; }
-    .likert-scale { display: flex; gap: 0.35rem; align-items: center; }
-    .lk-btn {
+    .pit-opt-body  { font-size: 0.92rem; color: var(--text-2); line-height: 1.65; flex: 1; }
+    .pit-opt-eg    { font-size: 0.78rem; color: var(--text-3); font-style: italic; margin-top: 0.85rem; line-height: 1.5; }
+    /* Center the prompt above cards */
+    #screen-pit .q-prompt { text-align: center; opacity: 1; font-size: 0.85rem; color: var(--text-3); letter-spacing: 0.03em; text-transform: none; font-weight: 500; margin-bottom: 1.5rem; }
+    /* Absolutely-positioned VS badge */
+    .pit-vs {
+      position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
       width: 34px; height: 34px; border-radius: 50%;
-      border: 1.5px solid var(--border); background: var(--surface);
-      cursor: pointer; font-size: 0.72rem; font-weight: 700; color: var(--text-3);
+      background: var(--bg); border: 1.5px solid var(--border);
+      box-shadow: var(--shadow-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.58rem; font-weight: 800; letter-spacing: 0.1em;
+      color: var(--text-3); pointer-events: none; z-index: 2;
+      text-transform: uppercase;
+    }
+    /* Mobile: stack vertically, VS becomes a horizontal rule */
+    [data-layout="mobile"] .pit-grid { grid-template-columns: 1fr; gap: 0.65rem; }
+    [data-layout="mobile"] .pit-vs   { position: static; transform: none; margin: 0 auto; width: auto; height: auto; border-radius: 20px; padding: 0.2rem 0.75rem; border-radius: 20px; display: block; text-align: center; }
+    [data-layout="mobile"] .pit-opt  { min-height: unset; }
+
+    /* ══ SLIDER FREQ TEXT ════════════════════════════════════════════════════ */
+    .sl-freq {
+      text-align: center; font-size: 0.82rem; font-weight: 600;
+      color: var(--accent); margin-top: 0.85rem; min-height: 1.2em;
+      transition: color 0.2s;
+    }
+    .sl-freq.neutral { color: var(--text-3); font-weight: 500; }
+
+    /* ══ HYBRID LIKERT ═══════════════════════════════════════════════════════ */
+    .lk-pair {
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: var(--radius); padding: 1.3rem; margin-bottom: 0.75rem; box-shadow: var(--shadow-sm);
+    }
+    .lk-lbl  { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent); margin-bottom: 1rem; }
+    .lk-row  { margin-bottom: 1rem; }
+    .lk-row:last-child { margin-bottom: 0; }
+    .lk-stmt { font-size: 0.92rem; color: var(--text-2); margin-bottom: 0.55rem; line-height: 1.55; }
+    .lk-scale { display: flex; gap: 0.35rem; align-items: center; }
+    .lk-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 1.5px solid var(--border); background: var(--surface-2);
+      cursor: pointer; font-size: 0.74rem; font-weight: 700; color: var(--text-3);
       transition: all 0.12s; display: flex; align-items: center; justify-content: center;
-      font-family: var(--font-b); flex-shrink: 0;
+      font-family: var(--font); flex-shrink: 0;
     }
-    .lk-btn:hover { border-color: var(--accent); color: var(--accent); }
-    .lk-btn.active { border-color: var(--accent); background: var(--accent); color: #fff; }
-    .lk-anchors { display: flex; justify-content: space-between; font-size: 0.63rem; color: var(--text-3); margin-top: 0.2rem; padding: 0 2px; }
+    .lk-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+    .lk-btn.on    { border-color: var(--accent); background: var(--accent); color: #fff; box-shadow: 0 0 0 3px rgba(91,79,232,0.18); }
+    .lk-ends { display: flex; justify-content: space-between; font-size: 0.62rem; color: var(--text-3); margin-top: 0.25rem; font-weight: 500; }
 
-    /* ── Visual Slider ──────────────────────────────────────────────────── */
-    .slider-pair {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 1.5rem; margin-bottom: 0.75rem;
+    /* ══ SLIDER ══════════════════════════════════════════════════════════════ */
+    .sl-pair {
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: var(--radius); padding: 1.5rem; margin-bottom: 0.75rem; box-shadow: var(--shadow-sm);
     }
-    .slider-options { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem; }
-    .s-opt { background: var(--surface-2); border-radius: 8px; padding: 0.75rem; font-size: 0.82rem; color: var(--text-2); line-height: 1.45; }
-    .s-opt.left  { border-left:  3px solid var(--accent); }
-    .s-opt.right { border-right: 3px solid var(--amber); text-align: right; }
-    .s-opt-lbl { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.3rem; }
-    .s-opt.left .s-opt-lbl  { color: var(--accent); }
-    .s-opt.right .s-opt-lbl { color: var(--amber); }
-
-    .slider-wrap { position: relative; }
-    input.vslider {
-      width: 100%; -webkit-appearance: none; appearance: none;
-      height: 4px; border-radius: 4px; outline: none; cursor: pointer;
-    }
+    .sl-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+    .sl-opt  { background: var(--surface-2); border-radius: 10px; padding: 0.85rem; font-size: 0.83rem; color: var(--text-2); line-height: 1.5; }
+    .sl-opt.L { border-left:  3px solid var(--accent); }
+    .sl-opt.R { border-right: 3px solid var(--amber); text-align: right; }
+    .sl-tag   { font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.3rem; }
+    .sl-opt.L .sl-tag { color: var(--accent); }
+    .sl-opt.R .sl-tag { color: var(--amber); }
+    input.vslider { width: 100%; -webkit-appearance: none; appearance: none; height: 5px; border-radius: 5px; outline: none; cursor: pointer; }
     input.vslider::-webkit-slider-thumb {
-      -webkit-appearance: none; appearance: none;
-      width: 22px; height: 22px; border-radius: 50%;
-      background: var(--surface); border: 3px solid var(--text);
-      cursor: pointer; transition: border-color 0.2s, transform 0.1s;
+      -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%;
+      background: var(--surface); border: 3px solid var(--accent);
+      box-shadow: var(--shadow-md); cursor: pointer; transition: transform 0.1s;
     }
-    input.vslider::-webkit-slider-thumb:hover { border-color: var(--accent); transform: scale(1.1); }
-    input.vslider::-moz-range-thumb {
-      width: 20px; height: 20px; border-radius: 50%;
-      background: var(--surface); border: 3px solid var(--text); cursor: pointer;
-    }
-    .slider-labels { display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--text-3); margin-top: 0.4rem; }
-    .slider-center { text-align: center; font-size: 0.65rem; color: var(--text-3); }
+    input.vslider::-webkit-slider-thumb:hover { transform: scale(1.15); }
+    input.vslider::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: var(--surface); border: 3px solid var(--accent); cursor: pointer; }
+    .sl-ends { display: flex; justify-content: space-between; font-size: 0.63rem; color: var(--text-3); margin-top: 0.45rem; font-weight: 500; }
 
-    /* ── Results ────────────────────────────────────────────────────────── */
-    .result-block { margin-bottom: 2rem; }
-    .result-row {
-      display: flex; align-items: center; gap: 0.75rem;
-      padding: 0.65rem 0; border-bottom: 1px solid var(--border);
-    }
-    .result-row:last-child { border-bottom: none; }
-    .r-rank  { font-family: var(--font-h); font-size: 1rem; font-weight: 700; color: var(--accent); min-width: 24px; }
-    .r-name  { min-width: 130px; font-weight: 600; font-size: 0.88rem; }
-    .r-bar-w { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
-    .r-bar   { height: 5px; background: var(--accent); border-radius: 3px; transition: width 1s ease; width: 0; }
-    .r-val   { font-size: 0.73rem; color: var(--text-3); min-width: 36px; text-align: right; }
+    /* ══ INFO BOX ════════════════════════════════════════════════════════════ */
+    .info { background: var(--accent-bg); border: 1.5px solid rgba(91,79,232,0.16); border-radius: var(--radius); padding: 0.9rem 1.1rem; font-size: 0.87rem; color: var(--text-2); margin-bottom: 1.25rem; line-height: 1.7; }
+    .pid-chip { background: var(--accent-bg); border: 1.5px solid rgba(91,79,232,0.16); border-radius: var(--radius); padding: 0.9rem 1.1rem; font-family: monospace; font-size: 0.88rem; color: var(--accent); word-break: break-all; margin-bottom: 0.5rem; }
 
-    .style-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 1.25rem; margin-bottom: 0.75rem;
-    }
-    .style-card-rank { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 0.25rem; }
-    .style-card-name { font-family: var(--font-h); font-size: 1.1rem; font-weight: 700; margin-bottom: 0.35rem; }
-    .style-card-tag  { font-size: 0.82rem; color: var(--text-3); font-style: italic; margin-bottom: 0.6rem; }
-    .style-card-body { font-size: 0.85rem; color: var(--text-2); line-height: 1.6; }
+    /* ══ RESULT BARS ═════════════════════════════════════════════════════════ */
+    .r-row  { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 0; border-bottom: 1px solid var(--border); }
+    .r-row:last-child { border-bottom: none; }
+    .r-rank { font-size: 1rem; font-weight: 800; color: var(--accent); min-width: 24px; }
+    .r-name { min-width: 132px; font-weight: 600; font-size: 0.87rem; }
+    .r-bw   { flex: 1; height: 6px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+    .r-b    { height: 6px; background: linear-gradient(90deg, var(--accent), var(--accent-dark)); border-radius: 4px; transition: width 1s var(--ease); width: 0; }
+    .r-val  { font-size: 0.72rem; color: var(--text-3); min-width: 36px; text-align: right; font-weight: 600; }
 
-    /* ── Completion ─────────────────────────────────────────────────────── */
-    .completion-code {
-      background: var(--text); color: #fff; border-radius: var(--radius);
-      padding: 1.75rem; text-align: center; margin-bottom: 1.5rem;
-    }
-    .code-lbl  { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.55; margin-bottom: 0.6rem; }
-    .code-val  { font-family: monospace; font-size: 2rem; font-weight: 700; letter-spacing: 0.08em; }
-    .code-hint { font-size: 0.78rem; opacity: 0.55; margin-top: 0.5rem; }
+    /* ══ STYLE CARD ══════════════════════════════════════════════════════════ */
+    .sty-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 1.3rem; margin-bottom: 0.75rem; box-shadow: var(--shadow-sm); }
+    .sty-rank { font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent); margin-bottom: 0.25rem; }
+    .sty-name { font-size: 1.15rem; font-weight: 800; margin-bottom: 0.35rem; letter-spacing: -0.015em; }
+    .sty-tag  { font-size: 0.83rem; color: var(--text-3); margin-bottom: 0.65rem; font-weight: 500; }
+    .sty-body { font-size: 0.87rem; color: var(--text-2); line-height: 1.68; }
 
+    /* ══ COMPLETION CODE ═════════════════════════════════════════════════════ */
+    .cc-box { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); color: #fff; border-radius: var(--radius); padding: 2rem; text-align: center; margin-bottom: 1.5rem; box-shadow: 0 4px 24px rgba(91,79,232,0.42); }
+    [data-theme="dark"] .cc-box { box-shadow: 0 4px 24px rgba(124,111,245,0.55); }
+    .cc-lbl  { font-size: 0.63rem; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.65; margin-bottom: 0.6rem; }
+    .cc-val  { font-family: 'Courier New', monospace; font-size: 2rem; font-weight: 700; letter-spacing: 0.1em; }
+    .cc-hint { font-size: 0.77rem; opacity: 0.6; margin-top: 0.5rem; }
     .prolific-btn {
       display: flex; align-items: center; justify-content: center; gap: 0.5rem;
       background: var(--accent); color: #fff; border-radius: var(--radius);
-      padding: 1rem 2rem; font-family: var(--font-b); font-size: 0.95rem;
-      font-weight: 600; text-decoration: none; transition: all 0.15s;
+      padding: 1rem 2rem; font-family: var(--font); font-size: 0.95rem;
+      font-weight: 700; text-decoration: none; transition: all 0.15s;
       width: 100%; margin-bottom: 0.75rem;
+      box-shadow: 0 2px 14px rgba(91,79,232,0.38); letter-spacing: -0.01em;
     }
-    .prolific-btn:hover { background: var(--accent-dark); }
+    .prolific-btn:hover { background: var(--accent-dark); transform: translateY(-2px); box-shadow: 0 4px 22px rgba(91,79,232,0.48); }
 
-    .bonus-offer {
-      background: var(--amber-bg); border: 1px solid rgba(176,106,40,0.2);
-      border-radius: var(--radius); padding: 1.25rem; margin-top: 1.5rem;
-    }
-    .bonus-offer h3 { color: var(--amber); margin-bottom: 0.35rem; }
-    .bonus-offer p  { font-size: 0.85rem; }
+    /* ══ BONUS OFFER ═════════════════════════════════════════════════════════ */
+    .bonus { background: var(--amber-bg); border: 1.5px solid rgba(194,105,10,0.2); border-radius: var(--radius); padding: 1.4rem; margin-top: 1.5rem; box-shadow: var(--shadow-sm); }
+    [data-theme="dark"] .bonus { border-color: rgba(245,158,11,0.2); }
+    .bonus h3 { color: var(--amber); margin-bottom: 0.4rem; }
+    .bonus p  { font-size: 0.85rem; }
 
-    /* ── Engagement ─────────────────────────────────────────────────────── */
+    /* ══ ENGAGEMENT ══════════════════════════════════════════════════════════ */
     .eng-item { margin-bottom: 1.75rem; }
-    .eng-q    { font-size: 0.9rem; font-weight: 500; color: var(--text); margin-bottom: 0.75rem; }
-    .eng-scale { display: flex; gap: 0.3rem; flex-wrap: wrap; align-items: center; }
+    .eng-q    { font-size: 0.92rem; font-weight: 600; color: var(--text); margin-bottom: 0.8rem; }
+    .eng-row  { display: flex; gap: 0.3rem; flex-wrap: wrap; }
     .eng-btn {
-      width: 36px; height: 36px; border-radius: 50%;
-      border: 1.5px solid var(--border); background: var(--surface);
+      width: 38px; height: 38px; border-radius: 50%;
+      border: 1.5px solid var(--border); background: var(--surface-2);
       cursor: pointer; font-size: 0.78rem; font-weight: 700; color: var(--text-3);
       transition: all 0.12s; display: flex; align-items: center; justify-content: center;
-      font-family: var(--font-b);
+      font-family: var(--font);
     }
-    .eng-btn:hover { border-color: var(--accent); color: var(--accent); }
-    .eng-btn.active { border-color: var(--accent); background: var(--accent); color: #fff; }
-    .eng-anchors { display: flex; justify-content: space-between; font-size: 0.63rem; color: var(--text-3); margin-top: 0.2rem; }
+    .eng-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+    .eng-btn.on    { border-color: var(--accent); background: var(--accent); color: #fff; box-shadow: 0 0 0 3px rgba(91,79,232,0.18); }
+    .eng-ends { display: flex; justify-content: space-between; font-size: 0.62rem; color: var(--text-3); margin-top: 0.25rem; font-weight: 500; }
 
-    /* ── Info boxes ─────────────────────────────────────────────────────── */
-    .info {
-      background: var(--accent-bg); border: 1px solid rgba(55,110,99,0.18);
-      border-radius: 8px; padding: 0.85rem 1rem;
-      font-size: 0.85rem; color: var(--accent-dark); margin-bottom: 1.25rem;
-    }
-    .pid-chip {
-      background: var(--accent-bg); border: 1px solid rgba(55,110,99,0.2);
-      border-radius: 8px; padding: 0.85rem 1rem;
-      font-family: monospace; font-size: 0.88rem; color: var(--accent-dark);
-      word-break: break-all; margin-bottom: 0.5rem;
-    }
+    /* ══ CHECK / SAVING ══════════════════════════════════════════════════════ */
+    .check { width: 76px; height: 76px; border-radius: 50%; background: var(--accent-bg); border: 2px solid rgba(91,79,232,0.3); display: flex; align-items: center; justify-content: center; font-size: 1.85rem; color: var(--accent); margin: 0 auto 1.5rem; box-shadow: var(--shadow-md); }
+    .saving-wrap { text-align: center; padding: 5rem 0; }
+    .spinner { width: 48px; height: 48px; margin: 0 auto 1.5rem; border: 3px solid var(--surface-2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Saving overlay ─────────────────────────────────────────────────── */
-    .saving-toast {
-      position: fixed; bottom: 1.75rem; left: 50%; transform: translateX(-50%);
-      background: var(--text); color: #fff; border-radius: 40px;
-      padding: 0.55rem 1.5rem; font-size: 0.82rem; font-weight: 500;
-      z-index: 300; opacity: 0; transition: opacity 0.2s; pointer-events: none;
-    }
-    .saving-toast.show { opacity: 1; }
+    /* ══ TOAST ═══════════════════════════════════════════════════════════════ */
+    #toast { position: fixed; bottom: 1.75rem; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); border-radius: 40px; padding: 0.58rem 1.5rem; font-size: 0.82rem; font-weight: 600; z-index: 300; opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap; box-shadow: var(--shadow-lg); }
+    #toast.show { opacity: 1; }
 
-    /* ── Check icon ─────────────────────────────────────────────────────── */
-    .check-circle {
-      width: 72px; height: 72px; border-radius: 50%;
-      background: rgba(55,110,99,0.1); border: 2px solid rgba(55,110,99,0.35);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.75rem; color: var(--accent); margin: 0 auto 1.5rem;
-    }
-
-    /* ── Divider ────────────────────────────────────────────────────────── */
+    /* ══ UTILS ═══════════════════════════════════════════════════════════════ */
     hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
 
-    /* ── Step pills ─────────────────────────────────────────────────────── */
-    .step-pills { display: flex; gap: 0.4rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
-    .pill {
-      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
-      background: var(--surface-2); color: var(--text-3);
-      border-radius: 20px; padding: 0.2rem 0.65rem;
-    }
-    .pill.done  { background: var(--accent-bg); color: var(--accent); }
-    .pill.active{ background: var(--accent); color: #fff; }
-
     @media (max-width: 480px) {
-      .instrument-grid { grid-template-columns: 1fr; }
-      h1 { font-size: 1.65rem; }
-      .slider-options { grid-template-columns: 1fr; }
-      .code-val { font-size: 1.5rem; }
-      .shell { padding: 1.75rem 1.1rem 5rem; }
+      .inst-grid { grid-template-columns: 1fr; }
+      .sl-opts   { grid-template-columns: 1fr; }
+      h1 { font-size: 1.75rem; }
+      h2 { font-size: 1.35rem; }
+      .cc-val { font-size: 1.55rem; }
+      .shell  { padding: 2rem 1.1rem 5rem; }
     }
   </style>
 </head>
 <body>
-<div id="progress-rail"><div id="progress-fill"></div></div>
-<div class="saving-toast" id="toast"></div>
+
+<div id="rail"><div id="rail-fill"></div></div>
+<button id="theme-btn"  class="fix-btn" onclick="toggleTheme()"  title="Toggle light / dark">🌙</button>
+<button id="layout-btn" class="fix-btn" onclick="toggleLayout()" title="Toggle mobile / desktop layout">🖥️</button>
+<div id="toast"></div>
 
 <div class="shell">
+<div id="mobile-banner">
+  <strong>📱 Looks like you're on mobile.</strong> This study works best on a desktop or tablet. We've switched to a mobile-friendly layout — you can toggle it anytime with the 🖥️ button in the top right.
+</div>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       SCREEN 1 — SPLASH
-  ═══════════════════════════════════════════════════════════════════ -->
-  <div class="screen active" id="screen-splash">
-    <span class="eyebrow">Conflict Style Research · University Study</span>
-    <h1>How do you handle conflict?</h1>
-    <p>
-      We're collecting data to study how people prefer to navigate disagreement —
-      and to compare different ways of measuring that. This research is designed
-      to improve the tools practitioners and organizations use when working with teams.
-    </p>
-    <p>
-      This study has <strong>two paid parts</strong> that take about
-      <strong>12–18 minutes</strong> in total. After completing them, you'll
-      receive a completion code to submit on Prolific.
-    </p>
-    <p>
-      As a bonus, you'll have the option to view your personal conflict style
-      profile and answer a few optional questions. This part is unpaid and
-      completely voluntary.
-    </p>
+<!-- ═══════════════════════ SPLASH ═══════════════════════════════════════════ -->
+<div class="screen active" id="screen-splash">
+  <span class="eyebrow">Conflict Style Research · University Study</span>
+  <h1>How do you handle conflict?</h1>
+  <p>We're collecting data to study how people navigate disagreement — and to compare different ways of measuring it. This research helps improve the tools practitioners and organizations use when working with teams.</p>
+  <p>This study has <strong>two paid parts</strong> that take about <strong>12–18 minutes</strong> total. After completing them you'll receive a completion code to submit on Prolific.</p>
+  <p>As a bonus you'll have the option to view your personal conflict style profile and answer a few optional questions. That part is unpaid and completely voluntary.</p>
+  <div class="info"><strong>What to expect:</strong> A 20-item survey about how you approach conflict, followed by a second short assessment in a different format. There are no right or wrong answers — we're interested in your genuine tendencies.</div>
+  <div class="btn-row">
+    <button class="btn btn-primary btn-lg" onclick="goTo('prolific')">Begin →</button>
+  </div>
+  <p style="font-size:0.74rem;color:var(--text-3);margin-top:1.25rem">By continuing you consent to your anonymized responses being used for research. Your Prolific ID is stored only for payment purposes.</p>
+</div>
 
-    <div class="info">
-      <strong>What to expect:</strong> You'll answer a 20-item survey about
-      how you approach conflict, followed by a second short assessment that
-      uses a different format. There are no right or wrong answers —
-      we're interested in your genuine tendencies.
+<!-- ═══════════════════════ PROLIFIC ID ══════════════════════════════════════ -->
+<div class="screen" id="screen-prolific">
+  <span class="eyebrow">Step 1 of 2</span>
+  <h2>Confirm your Prolific ID</h2>
+  <p>Your ID is used only to process your payment and is never linked to your responses in any published research.</p>
+  <div id="pid-auto" style="display:none">
+    <p style="font-size:0.84rem;color:var(--text-3);margin-bottom:0.35rem">We detected your Prolific ID:</p>
+    <div class="pid-chip" id="pid-chip"></div>
+    <p style="font-size:0.77rem;color:var(--text-3);margin-bottom:1rem">If this looks wrong, correct it below.</p>
+  </div>
+  <label class="lbl" for="pid-inp">Prolific ID</label>
+  <input class="inp" type="text" id="pid-inp" placeholder="e.g. 5f3c2a1b..." autocomplete="off" spellcheck="false">
+  <p id="pid-err" style="font-size:0.8rem;color:#e53e3e;margin-top:0.4rem;display:none">Please enter your Prolific ID to continue.</p>
+  <div class="btn-row apart">
+    <button class="btn btn-ghost" onclick="goTo('splash')">← Back</button>
+    <button class="btn btn-primary" onclick="confirmProlific()">Confirm & Continue →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════ TKI INTRO ════════════════════════════════════════ -->
+<div class="screen" id="screen-tki-intro">
+  <span class="eyebrow">Part 1 of 2 · Conflict Style Survey</span>
+  <h2>20 quick questions</h2>
+  <p>For each question you'll see two statements. Pick the one that sounds more like you — even if neither is a perfect fit, go with the closer one.</p>
+  <p><strong>There are no right or wrong answers.</strong> Go with your gut — your first instinct is usually most accurate.</p>
+  <div class="info">Takes about <strong>4–6 minutes.</strong> You can go back and change any answer before submitting.</div>
+  <div class="btn-row">
+    <button class="btn btn-primary btn-lg" onclick="startTKI()">Start →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════ TKI SURVEY ═══════════════════════════════════════ -->
+<div class="screen" id="screen-tki">
+  <div class="q-rail"><div class="q-fill" id="tki-fill"></div></div>
+  <div class="q-meta"><span id="tki-lbl">Question 1 of 20</span><span id="tki-pct">0%</span></div>
+  <p class="q-prompt">Which of these sounds more like you?</p>
+  <div class="choice" id="tki-a" onclick="tkiSelect('a')"><span class="choice-ltr">A</span><span class="choice-txt" id="tki-a-txt"></span></div>
+  <div class="choice" id="tki-b" onclick="tkiSelect('b')"><span class="choice-ltr">B</span><span class="choice-txt" id="tki-b-txt"></span></div>
+  <div class="btn-row apart" style="margin-top:1.25rem">
+    <button class="btn btn-ghost" id="tki-prev" onclick="tkiPrev()" style="display:none">← Back</button>
+    <span></span>
+    <button class="btn btn-primary" id="tki-next" onclick="tkiNext()" style="display:none">Next →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════ INSTRUMENT SELECT ════════════════════════════════ -->
+<div class="screen" id="screen-instrument-select">
+  <span class="eyebrow">Part 2 of 2</span>
+  <h2>Choose your second assessment</h2>
+  <p style="font-size:0.88rem">Each uses a different format to explore conflict style. Pick one.</p>
+  <div class="inst-grid">
+    <div class="i-card" id="ic-ranking" onclick="selectInst('ranking')"><div class="i-ico">🗂️</div><div class="i-name">Style Ranking</div><div class="i-desc">Sort all five conflict styles from most to least like you.</div><div class="i-time">~2 min</div></div>
+    <div class="i-card" id="ic-pit"     onclick="selectInst('pit')"><div class="i-ico">⚔️</div><div class="i-name">The Pit</div><div class="i-desc">Head-to-head matchups — pick whichever behavior sounds more like you.</div><div class="i-time">~5 min</div></div>
+    <div class="i-card" id="ic-hybrid"  onclick="selectInst('hybrid')"><div class="i-ico">🎚️</div><div class="i-name">Hybrid Rating</div><div class="i-desc">Rate each statement independently — no forced tradeoffs.</div><div class="i-time">~6 min</div></div>
+    <div class="i-card" id="ic-slider"  onclick="selectInst('slider')"><div class="i-ico">↔️</div><div class="i-name">Visual Slider</div><div class="i-desc">Drag toward whichever description fits better — middle = genuine tie.</div><div class="i-time">~5 min</div></div>
+  </div>
+  <div class="btn-row end">
+    <button class="btn btn-primary" id="inst-next" disabled onclick="startInst()">Continue →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════ RANKING ══════════════════════════════════════════ -->
+<div class="screen" id="screen-ranking">
+  <span class="eyebrow">Part 2 of 2 · Style Ranking</span>
+  <h2>Rank these five styles</h2>
+  <p style="font-size:0.9rem">Drag to reorder — <strong>most like you</strong> at the top, <strong>least like you</strong> at the bottom.</p>
+  <ul class="rank-list" id="rank-list"></ul>
+  <div class="btn-row end"><button class="btn btn-primary" onclick="finishRanking()">Submit →</button></div>
+</div>
+
+<!-- ═══════════════════════ PIT ═══════════════════════════════════════════════ -->
+<div class="screen" id="screen-pit">
+  <div class="q-rail"><div class="q-fill" id="pit-fill"></div></div>
+  <div class="q-meta"><span id="pit-lbl">Match 1 of 10</span><span id="pit-pct">0%</span></div>
+  <p class="q-prompt">Which of these sounds more like you?</p>
+  <div class="pit-wrap">
+    <div class="pit-grid">
+      <div class="pit-opt" id="pit-a" onclick="pitSel('a')"></div>
+      <div class="pit-opt" id="pit-b" onclick="pitSel('b')"></div>
     </div>
+    <div class="pit-vs">VS</div>
+  </div>
+  <div class="btn-row apart" style="margin-top:1.25rem">
+    <button class="btn btn-ghost" id="pit-prev" onclick="pitPrev()" style="display:none">← Back</button>
+    <span></span>
+    <button class="btn btn-primary" id="pit-next" onclick="pitNext()" style="display:none">Next →</button>
+  </div>
+</div>
 
+<!-- ═══════════════════════ HYBRID ═══════════════════════════════════════════ -->
+<div class="screen" id="screen-hybrid">
+  <div class="q-rail"><div class="q-fill" id="hyb-fill"></div></div>
+  <div class="q-meta"><span id="hyb-lbl">Pair 1 of 20</span><span id="hyb-pct">0%</span></div>
+  <p class="q-prompt">Rate each statement — how much does it describe you?</p>
+  <div class="lk-pair" id="hyb-card"></div>
+  <div class="btn-row apart" style="margin-top:1.25rem">
+    <button class="btn btn-ghost" id="hyb-prev" onclick="hybPrev()" style="display:none">← Back</button>
+    <span></span>
+    <button class="btn btn-primary" id="hyb-next" onclick="hybNext()" style="display:none">Next →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════ SLIDER ═══════════════════════════════════════════ -->
+<div class="screen" id="screen-slider">
+  <div class="q-rail"><div class="q-fill" id="sl-fill"></div></div>
+  <div class="q-meta"><span id="sl-lbl">Item 1 of 20</span><span id="sl-pct">0%</span></div>
+  <p class="q-prompt">Drag toward whichever description sounds more like you. Middle = genuine tie.</p>
+  <div class="sl-pair" id="sl-card"></div>
+  <div class="btn-row apart" style="margin-top:1.25rem">
+    <button class="btn btn-ghost" id="sl-prev" onclick="slPrev()" style="display:none">← Back</button>
+    <span></span>
+    <button class="btn btn-primary" id="sl-next" onclick="slNext()">Next →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════ SAVING ════════════════════════════════════════════ -->
+<div class="screen" id="screen-saving">
+  <div class="saving-wrap"><div class="spinner"></div><h2>Saving your responses…</h2><p style="font-size:0.9rem">Just a moment — please don't close this tab.</p></div>
+</div>
+
+<!-- ═══════════════════════ COMPLETE ═════════════════════════════════════════ -->
+<div class="screen" id="screen-complete">
+  <div class="check">✓</div>
+  <h2 style="text-align:center;margin-bottom:0.5rem">You're done — thank you!</h2>
+  <p style="text-align:center;font-size:0.9rem;margin-bottom:1.75rem">Your responses have been saved. Here's your completion code:</p>
+  <div class="cc-box"><div class="cc-lbl">Completion Code</div><div class="cc-val" id="cc-val">—</div><div class="cc-hint">Copy this and paste it into Prolific</div></div>
+  <a class="prolific-btn" id="prolific-link" href="#" target="_blank">Return to Prolific →</a>
+  <p style="font-size:0.77rem;text-align:center;color:var(--text-3)">If Prolific was already open, switch back and paste the code.<br>The link above opens Prolific and auto-completes for you.</p>
+  <div class="bonus">
+    <h3>✨ Want to see your conflict style profile?</h3>
+    <p>Completely <strong>optional and unpaid</strong> — about 5 minutes. Includes your full style breakdown, a few short questions, and a downloadable PDF.</p>
     <div class="btn-row">
-      <button class="btn btn-primary btn-lg" onclick="goTo('prolific')">Begin →</button>
-    </div>
-    <p style="font-size:0.75rem;color:var(--text-3);margin-top:1rem">
-      By continuing, you consent to your anonymized responses being used for research.
-      Your Prolific ID is stored only for payment purposes.
-    </p>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════
-       SCREEN 2 — PROLIFIC ID
-  ═══════════════════════════════════════════════════════════════════ -->
-  <div class="screen" id="screen-prolific">
-    <span class="eyebrow">Step 1 of 2</span>
-    <h2>Confirm your Prolific ID</h2>
-    <p>Your ID is used only to process your payment on Prolific. It is never linked to your responses in any published research.</p>
-
-    <div id="pid-auto-block" style="display:none">
-      <p style="font-size:0.85rem;color:var(--text-3);margin-bottom:0.35rem">We detected your Prolific ID:</p>
-      <div class="pid-chip" id="pid-display"></div>
-      <p style="font-size:0.78rem;color:var(--text-3)">If this looks wrong, you can correct it below.</p>
-    </div>
-
-    <div style="margin-top:1rem">
-      <label class="field-label" for="pid-input">Prolific ID</label>
-      <input class="field" type="text" id="pid-input" placeholder="e.g. 5f3c2a1b..." autocomplete="off" spellcheck="false">
-      <p id="pid-error" style="font-size:0.8rem;color:#c0392b;margin-top:0.4rem;display:none">Please enter your Prolific ID to continue.</p>
-    </div>
-
-    <div class="btn-row apart">
-      <button class="btn btn-outline" onclick="goTo('splash')">← Back</button>
-      <button class="btn btn-primary" onclick="confirmProlific()">Confirm & Continue →</button>
+      <button class="btn btn-primary" onclick="goTo('results')" style="background:var(--amber);box-shadow:0 2px 14px rgba(194,105,10,0.38)">See My Profile →</button>
+      <button class="btn btn-ghost" onclick="goTo('skip-done')">No thanks</button>
     </div>
   </div>
+</div>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       SCREEN 3 — TKI INTRO
-  ═══════════════════════════════════════════════════════════════════ -->
-  <div class="screen" id="screen-tki-intro">
-    <span class="eyebrow">Part 1 of 2 · Conflict Style Survey</span>
-    <h2>20 quick questions</h2>
-    <p>
-      For each question, you'll see two statements. Pick the one that sounds
-      more like you — even if neither is a perfect fit, go with the closer one.
-    </p>
-    <p>
-      <strong>There are no right or wrong answers.</strong> Go with your gut —
-      your first instinct is usually most accurate.
-    </p>
-    <div class="info">
-      Takes about <strong>4–6 minutes.</strong> You can go back and change any answer before submitting.
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-primary btn-lg" onclick="startTKI()">Start →</button>
-    </div>
+<!-- ═══════════════════════ RESULTS (BONUS) ══════════════════════════════════ -->
+<div class="screen" id="screen-results">
+  <span class="eyebrow">Your Profile · Bonus</span>
+  <h2>Your Conflict Style Profile</h2>
+  <p style="font-size:0.87rem">Based on your TKI survey responses.</p>
+  <div id="tki-bars" style="margin-bottom:2rem"></div>
+  <hr>
+  <h3 style="margin-bottom:1rem">What your top style means</h3>
+  <div id="top-card"></div>
+  <div id="second-card" style="display:none"></div>
+  <hr>
+  <h3 style="margin-bottom:0.5rem">Your second assessment: <span id="inst-name"></span></h3>
+  <p style="font-size:0.84rem">How the second format ranked your styles:</p>
+  <div id="inst-bars"></div>
+  <div class="btn-row end" style="margin-top:2rem">
+    <button class="btn btn-primary" onclick="goTo('engagement')" style="background:var(--amber);box-shadow:0 2px 14px rgba(194,105,10,0.38)">Continue to Questions →</button>
   </div>
+</div>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       SCREEN 4 — TKI SURVEY
-  ═══════════════════════════════════════════════════════════════════ -->
-  <div class="screen" id="screen-tki">
-    <div class="q-rail"><div class="q-fill" id="tki-fill"></div></div>
-    <div class="q-label"><span id="tki-label">Question 1 of 20</span><span id="tki-pct">0%</span></div>
-
-    <p class="q-prompt">Which of these sounds more like you?</p>
-    <div class="choice sel" id="tki-a" onclick="tkiSelect('a')">
-      <span class="choice-ltr">A</span>
-      <span class="choice-txt" id="tki-a-txt"></span>
-    </div>
-    <div class="choice" id="tki-b" onclick="tkiSelect('b')">
-      <span class="choice-ltr">B</span>
-      <span class="choice-txt" id="tki-b-txt"></span>
-    </div>
-
-    <div class="btn-row apart" style="margin-top:1.25rem">
-      <button class="btn btn-outline" id="tki-prev" onclick="tkiPrev()" style="display:none">← Back</button>
-      <span></span>
-      <button class="btn btn-primary" id="tki-next" onclick="tkiNext()" style="display:none">Next →</button>
-    </div>
+<!-- ═══════════════════════ ENGAGEMENT (BONUS) ═══════════════════════════════ -->
+<div class="screen" id="screen-engagement">
+  <span class="eyebrow">Optional · 5 Questions</span>
+  <h2>A few quick questions</h2>
+  <p style="font-size:0.87rem">Your feedback helps us improve these assessments. No right answers.</p>
+  <div id="eng-items"></div>
+  <div style="margin-top:1.25rem">
+    <p style="font-size:0.9rem;font-weight:600;color:var(--text);margin-bottom:0.5rem">Anything the assessment missed or got wrong? (optional)</p>
+    <textarea class="inp" id="eng-open" placeholder="Type here…"></textarea>
   </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════
-       SCREEN 5 — INSTRUMENT SELECT
-  ═══════════════════════════════════════════════════════════════════ -->
-  <div class="screen" id="screen-instrument-select">
-    <span class="eyebrow">Part 2 of 2</span>
-    <h2>Choose your second assessment</h2>
-    <p style="font-size:0.88rem">
-      Each uses a different format to explore conflict style. Pick one.
-      <!-- DEV NOTE: In production, instrument is passed via URL param and this screen is skipped -->
-    </p>
-
-    <div class="instrument-grid" id="instrument-grid">
-      <div class="i-card" id="ic-ranking" onclick="selectInstrument('ranking')">
-        <div class="i-icon">🗂️</div>
-        <div class="i-name">Style Ranking</div>
-        <div class="i-desc">Sort all five conflict styles from most to least like you.</div>
-        <div class="i-time">~2 min</div>
-      </div>
-      <div class="i-card" id="ic-pit" onclick="selectInstrument('pit')">
-        <div class="i-icon">⚔️</div>
-        <div class="i-name">The Pit</div>
-        <div class="i-desc">Head-to-head matchups — pick whichever behavior sounds more like you.</div>
-        <div class="i-time">~5 min</div>
-      </div>
-      <div class="i-card" id="ic-hybrid" onclick="selectInstrument('hybrid')">
-        <div class="i-icon">🎚️</div>
-        <div class="i-name">Hybrid Rating</div>
-        <div class="i-desc">Rate each statement independently — no forced tradeoffs.</div>
-        <div class="i-time">~6 min</div>
-      </div>
-      <div class="i-card" id="ic-slider" onclick="selectInstrument('slider')">
-        <div class="i-icon">↔️</div>
-        <div class="i-name">Visual Slider</div>
-        <div class="i-desc">Drag toward whichever description fits you better — or leave in the middle.</div>
-        <div class="i-time">~5 min</div>
-      </div>
-    </div>
-
-    <div class="btn-row end">
-      <button class="btn btn-primary" id="instrument-next-btn" disabled onclick="startInstrument()">Continue →</button>
-    </div>
+  <div class="btn-row end">
+    <button class="btn btn-primary" onclick="submitEng()" style="background:var(--amber);box-shadow:0 2px 14px rgba(194,105,10,0.38)">Submit →</button>
   </div>
+</div>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       SCREEN 6 — RANKING
-  ═══════════════════════════════════════════════════════════════════ -->
-  <div class="screen" id="screen-ranking">
-    <span class="eyebrow">Part 2 of 2 · Style Ranking</span>
-    <h2>Rank these five styles</h2>
-    <p style="font-size:0.88rem">Drag to reorder — put the style that sounds <strong>most like you</strong> at the top, <strong>least like you</strong> at the bottom.</p>
+<!-- ═══════════════════════ BONUS DONE ════════════════════════════════════════ -->
+<div class="screen" id="screen-bonus-done">
+  <div class="check" style="color:var(--amber);border-color:rgba(194,105,10,0.3);background:var(--amber-bg)">✓</div>
+  <h2 style="text-align:center">Thanks for the extra feedback!</h2>
+  <p style="text-align:center;font-size:0.9rem">Your responses have been saved. We genuinely appreciate it.</p>
+  <hr>
+  <h3 style="text-align:center;margin-bottom:0.5rem">Download your profile</h3>
+  <p style="text-align:center;font-size:0.87rem">A one-page summary of your conflict style results.</p>
+  <div class="btn-row" style="justify-content:center"><button class="btn btn-primary" onclick="dlPDF()">⬇ Download PDF</button></div>
+</div>
 
-    <ul class="rank-list" id="rank-list"></ul>
-
-    <div class="btn-row end">
-      <button class="btn btn-primary" onclick="finishInstrument('ranking')">Submit →</button>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════
-       SCREEN 7 — PIT
-  ═══════════════════════════════════════════════════════════════════ -->
-  <div class="screen" id="screen-pit">
-    <div class="q-rail"><div class="q-fill" id="pit-fill"></div></div>
-    <div class="q-label"><span id="pit-label">Match 1 of 10</span><span id="pit-pct">0%</span></div>
-
-    <p class="q-prompt">Which of these sounds more like you?</p>
-    <div class="pit-opt" id="pit-a" onclick="pitSelect('a')"></div>
-    <div class="pit-vs-divider">OR</div>
-    <div class="pit-opt" id="pit-b" onclick="pitSelect('b')"></div>
-
-    <div class="btn-row apart" style="margin-top:1.25rem">
-      <button class="btn btn-outline" id="pit-prev" onclick="pitPrev()" style="display:none">← Back</button>
-      <span></span>
-      <button class="btn btn-primary" id="pit-next" onclick="pitNext()" style="display:none">Next →</button>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════
-       SCREEN 8 — HYBRID LIKERT
-  ═══════════════════════════════════════════════════════════════════ -->
-  <div class="screen" id="screen-hybrid">
-    <div class="q-rail"><div class="q-fill" id="hybrid-fill"></div></div>
-    <div class="q-label"><span id="hybrid-label">Pair 1 of 20</span><span id="hybrid-pct">0%</span></div>
-
-    <p class="q-prompt">Rate each statement independently — how much does it describe you?</p>
-    <div class="likert-pair" id="hybrid-card"></div>
-
-    <div class="btn-row apart" style="margin-top:1.25rem">
-      <button class="btn btn-outline" id="hybrid-prev" onclick="hybridPrev()" style="display:none">← Back</button>
-      <span></span>
-      <button class="btn btn-primary" id="hybrid-next" onclick="hybridNext()" style="display:none">Next →</button>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════
-       SCREEN 9 — VISUAL SLIDER
-  ═══════════════════════════════════════════════════════════════════ -->
-  <div class="screen" id="screen-slider">
-    <div class="q-rail"><div class="q-fill" id="slider-fill"></div></div>
-    <div class="q-label"><span id="slider-label">Item 1 of 20</span><span id="slider-pct">0%</span></div>
-
-    <p class="q-prompt">Drag toward whichever description sounds more like you. Leave in the middle if it's a genuine tie.</p>
-    <div class="slider-pair" id="slider-card"></div>
-
-    <div class="btn-row apart" style="margin-top:1.25rem">
-      <button class="btn btn-outline" id="slider-prev" onclick="sliderPrev()" style="display:none">← Back</button>
-      <span></span>
-      <button class="btn btn-primary" id="slider-next" onclick="sliderNext()">Next →</button>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════
-       SCREEN 10 — SAVING
-  ═══════════════════════════════════════════════════════════════════ -->
-  <div class="screen" id="screen-saving" style="text-align:center;padding:4rem 0">
-    <div style="font-size:2rem;margin-bottom:1rem">⏳</div>
-    <h2>Saving your responses…</h2>
-    <p style="font-size:0.88rem">This takes just a moment. Please don't close this tab.</p>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════
-       SCREEN 11 — COMPLETE
-  ═══════════════════════════════════════════════════════════════════ -->
-  <div class="screen" id="screen-complete">
-    <div class="check-circle">✓</div>
-    <h2 style="text-align:center;margin-bottom:0.5rem">You're done — thank you!</h2>
-    <p style="text-align:center;font-size:0.9rem">Your responses have been saved. Here's your completion code:</p>
-
-    <div class="completion-code">
-      <div class="code-lbl">Completion Code</div>
-      <div class="code-val" id="display-code">—</div>
-      <div class="code-hint">Copy this code and paste it into Prolific</div>
-    </div>
-
-    <a class="prolific-btn" id="prolific-link" href="#" target="_blank">
-      Return to Prolific →
-    </a>
-    <p style="font-size:0.78rem;text-align:center;color:var(--text-3)">
-      If Prolific was already open, just switch back and paste the code above.<br>
-      The link above will open Prolific and auto-complete for you.
-    </p>
-
-    <div class="bonus-offer">
-      <h3>✨ Want to see your conflict style profile?</h3>
-      <p>This is <strong>completely optional and unpaid.</strong> It takes about 5 minutes and includes your full style breakdown plus a few short questions about how the assessment felt. You'll also be able to download a personalized PDF profile.</p>
-      <div class="btn-row">
-        <button class="btn btn-primary" onclick="goTo('results')" style="background:var(--amber)">See My Profile →</button>
-        <button class="btn btn-outline" onclick="goTo('bonus-done-skip')">No thanks</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════
-       SCREEN 12 — TKI RESULTS (BONUS)
-  ═══════════════════════════════════════════════════════════════════ -->
-  <div class="screen" id="screen-results">
-    <span class="eyebrow">Your Profile · Bonus</span>
-    <h2>Your Conflict Style Profile</h2>
-    <p style="font-size:0.85rem">Based on your TKI survey responses. Your top styles are highlighted.</p>
-
-    <div class="result-block">
-      <div id="tki-result-bars"></div>
-    </div>
-
-    <hr>
-    <h3 style="margin-bottom:1rem">What your top style means</h3>
-    <div id="tki-top-style-card"></div>
-    <div id="tki-second-style-card" style="display:none"></div>
-
-    <hr>
-    <h3 style="margin-bottom:0.5rem">Your second assessment: <span id="instrument-name-display"></span></h3>
-    <p style="font-size:0.83rem">How the second format ranked your styles:</p>
-    <div id="instrument-result-bars"></div>
-
-    <div class="btn-row end" style="margin-top:2rem">
-      <button class="btn btn-primary" onclick="goTo('engagement')" style="background:var(--amber)">Continue to Questions →</button>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════
-       SCREEN 13 — ENGAGEMENT (BONUS)
-  ═══════════════════════════════════════════════════════════════════ -->
-  <div class="screen" id="screen-engagement">
-    <span class="eyebrow">Optional · 5 Questions</span>
-    <h2>A few quick questions</h2>
-    <p style="font-size:0.85rem">Your feedback helps us improve these assessments. There are no right answers.</p>
-
-    <div id="eng-items"></div>
-
-    <div id="eng-open" style="margin-top:1.25rem">
-      <p class="eng-q" style="margin-bottom:0.5rem">Is there anything about how you handle conflict that the assessment missed or got wrong? (optional)</p>
-      <textarea class="field" id="eng-open-text" placeholder="Type here…"></textarea>
-    </div>
-
-    <div class="btn-row end">
-      <button class="btn btn-primary" onclick="submitEngagement()" style="background:var(--amber)">Submit →</button>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════
-       SCREEN 14 — BONUS DONE
-  ═══════════════════════════════════════════════════════════════════ -->
-  <div class="screen" id="screen-bonus-done">
-    <div class="check-circle" style="color:var(--amber);border-color:rgba(176,106,40,0.3);background:rgba(176,106,40,0.08)">✓</div>
-    <h2 style="text-align:center">Thanks for the extra feedback!</h2>
-    <p style="text-align:center;font-size:0.9rem">Your engagement responses have been saved. We genuinely appreciate you taking the time.</p>
-
-    <hr>
-    <h3 style="text-align:center;margin-bottom:0.5rem">Download your profile</h3>
-    <p style="text-align:center;font-size:0.85rem">A one-page summary of your conflict style results.</p>
-    <div class="btn-row" style="justify-content:center">
-      <button class="btn btn-primary" onclick="downloadPDF()">⬇ Download PDF</button>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════
-       SCREEN 15 — SKIPPED BONUS
-  ═══════════════════════════════════════════════════════════════════ -->
-  <div class="screen" id="screen-bonus-done-skip">
-    <div class="check-circle">✓</div>
-    <h2 style="text-align:center">All done — thanks!</h2>
-    <p style="text-align:center">Your Prolific submission has been recorded. You can now close this tab.</p>
-  </div>
+<!-- ═══════════════════════ SKIP DONE ════════════════════════════════════════ -->
+<div class="screen" id="screen-skip-done">
+  <div class="check">✓</div>
+  <h2 style="text-align:center">All done — thanks!</h2>
+  <p style="text-align:center">Your Prolific submission has been recorded. You can now close this tab.</p>
+</div>
 
 </div><!-- /shell -->
 
-<!-- ══ SCRIPTS ══════════════════════════════════════════════════════════════ -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 'use strict';
 
-// ══════════════════════════════════════════════════════════════════════════════
-// DATA
-// ══════════════════════════════════════════════════════════════════════════════
+// ── THEME ─────────────────────────────────────────────────────────────────────
+function initTheme() {
+  const saved  = localStorage.getItem('cf_theme');
+  const system = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  applyTheme(saved || system);
+}
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('cf_theme', t);
+  document.getElementById('theme-btn').textContent = t === 'dark' ? '☀️' : '🌙';
+}
+function toggleTheme() {
+  applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+}
 
-const TKI_ITEMS = [
-  { a:{code:'As',text:'I make sure my view is heard in group conflict.'},   b:{code:'Cp',text:'I try to keep everyone feeling valued during conflict.'} },
-  { a:{code:'Rv',text:'I usually stay quiet in group conflict.'},            b:{code:'Md',text:'I try to find solutions where everyone gives a little.'} },
-  { a:{code:'Md',text:'I prefer structure that gives everyone a voice.'},    b:{code:'As',text:'I state my needs clearly, even when it\'s hard.'} },
-  { a:{code:'Fx',text:'I adapt when conversations take an unexpected turn.'},b:{code:'Cp',text:'I try to preserve connection when I disagree.'} },
-  { a:{code:'Rv',text:'I hold back when things feel tense.'},                b:{code:'Fx',text:'I ease off when the conversation gets heated.'} },
-  { a:{code:'Md',text:'I nudge people toward a workable compromise.'},       b:{code:'Cp',text:'I look out for how people are feeling during conflict.'} },
-  { a:{code:'As',text:'I say what needs to be said.'},                       b:{code:'Fx',text:'I adjust my tone to keep things calm.'} },
-  { a:{code:'Cp',text:'I help people feel included in outcomes.'},           b:{code:'Rv',text:'I wait to speak when emotions run high.'} },
-  { a:{code:'Fx',text:'I try new approaches when one isn\'t working.'},      b:{code:'Md',text:'I work to ensure every voice is heard.'} },
-  { a:{code:'Rv',text:'I stay quiet when my opinion won\'t help.'},          b:{code:'As',text:'I speak up about what matters to me.'} },
-  { a:{code:'Md',text:'I support solutions where everyone feels heard.'},    b:{code:'As',text:'I speak up when silence sends the wrong message.'} },
-  { a:{code:'Fx',text:'I change tactics to protect relationships.'},         b:{code:'Rv',text:'I give space before sharing my opinion.'} },
-  { a:{code:'Cp',text:'I lead others toward shared agreement.'},             b:{code:'Fx',text:'I shift tone to reduce tension.'} },
-  { a:{code:'As',text:'I say what I believe, even if it\'s hard.'},         b:{code:'Fx',text:'I adapt my style to reduce friction.'} },
-  { a:{code:'Rv',text:'I let others resolve things without jumping in.'},    b:{code:'Cp',text:'I work to find solutions that work for everyone.'} },
-  { a:{code:'Md',text:'I reduce tension by naming shared values.'},          b:{code:'As',text:'I speak up to keep us on track.'} },
-  { a:{code:'Fx',text:'I adapt quickly to keep conversations moving.'},      b:{code:'Cp',text:'I encourage others to understand each other\'s needs.'} },
-  { a:{code:'Rv',text:'I let the dust settle before weighing in.'},          b:{code:'Md',text:'I try to get everyone to meet in the middle.'} },
-  { a:{code:'As',text:'I speak my truth, even when it\'s disruptive.'},      b:{code:'Cp',text:'I try to build connection during disagreement.'} },
-  { a:{code:'Md',text:'I bring structure when resolution feels out of reach.'},b:{code:'Rv',text:'I don\'t get involved unless I have to.'} },
-];
+// ── LAYOUT (mobile / desktop) ─────────────────────────────────────────────────
+function initLayout() {
+  const saved = localStorage.getItem('cf_layout');
+  if (saved) {
+    applyLayout(saved, false);
+    return;
+  }
+  // Auto-detect mobile
+  const isMobile = window.innerWidth < 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+  if (isMobile) {
+    applyLayout('mobile', true);
+  } else {
+    applyLayout('desktop', false);
+  }
+}
+function applyLayout(mode, showBanner) {
+  document.documentElement.setAttribute('data-layout', mode);
+  localStorage.setItem('cf_layout', mode);
+  document.getElementById('layout-btn').textContent = mode === 'mobile' ? '🖥️' : '📱';
+  const banner = document.getElementById('mobile-banner');
+  if (banner) banner.classList.toggle('show', showBanner && mode === 'mobile');
+}
+function toggleLayout() {
+  const current = document.documentElement.getAttribute('data-layout');
+  applyLayout(current === 'mobile' ? 'desktop' : 'mobile', false);
+}
 
-const CODE_MAP = { As:'Competing', Cp:'Collaborating', Rv:'Avoiding', Md:'Compromising', Fx:'Accommodating' };
+// ── HISTORY API ───────────────────────────────────────────────────────────────
+const WAYPOINTS = new Set(['splash','prolific','tki-intro','instrument-select','complete']);
 
-const STYLE_INFO = {
-  Competing: {
-    tagline: "You assert your position and push for what you believe is right.",
-    body: "You're comfortable advocating firmly in conflict. When something matters to you, you make sure it gets heard — even if it creates friction. You tend to influence outcomes rather than defer.",
-  },
-  Collaborating: {
-    tagline: "You dig into disagreements to find solutions that genuinely work for everyone.",
-    body: "You invest time understanding all sides and building outcomes that address everyone's real concerns. You're willing to stay in the discomfort of a conflict until it's actually resolved.",
-  },
-  Compromising: {
-    tagline: "You find fair middle-ground that lets everyone move forward.",
-    body: "You're pragmatic — willing to give a little to get a little. You help groups reach workable agreements without waiting for a perfect solution.",
-  },
-  Avoiding: {
-    tagline: "You step back from conflicts, engaging selectively.",
-    body: "You're thoughtful about which battles are worth fighting. You often let tensions cool before weighing in, or redirect energy when conflict seems unproductive.",
-  },
-  Accommodating: {
-    tagline: "You put the relationship first, giving ground to preserve harmony.",
-    body: "You're flexible and low-ego in conflict — often willing to defer to preserve goodwill. You value the relationship over winning.",
-  },
-};
-
-// Pit: one behavior description per style
-const PIT_DESC = {
-  As: "When something matters to me, I state my position clearly and advocate firmly — even if it creates friction. I'd rather address tension directly than soften my message.",
-  Cp: "I work to understand what everyone actually needs and look for solutions that genuinely address all sides — not just a quick fix that papers over the disagreement.",
-  Rv: "When a conflict doesn't feel worth the cost, I let it go. I'm selective about when to engage — sometimes stepping back is the most useful move.",
-  Md: "I look for a fair middle ground where everyone gives a little and gets a little. I'd rather find a workable solution quickly than hold out for something perfect.",
-  Fx: "I'm usually willing to set aside my preferences to keep the relationship intact. When someone else feels strongly, I'll often defer — it just isn't worth the fight to me.",
-};
-
-// Pit matchups: all 10 pairs from 5 styles (round-robin)
-const PIT_MATCHUPS = [
-  ['As','Cp'],['As','Rv'],['As','Md'],['As','Fx'],
-  ['Cp','Rv'],['Cp','Md'],['Cp','Fx'],
-  ['Rv','Md'],['Rv','Fx'],
-  ['Md','Fx'],
-];
-
-// Ranking style data
-const RANKING_STYLES = [
-  { code:'As', name:'Competing',     blurb:'Push for your position; advocate firmly.' },
-  { code:'Cp', name:'Collaborating', blurb:'Dig in together to find solutions everyone can live with.' },
-  { code:'Rv', name:'Avoiding',      blurb:'Step back from conflict; engage selectively.' },
-  { code:'Md', name:'Compromising',  blurb:'Find a fair middle ground; give and take.' },
-  { code:'Fx', name:'Accommodating', blurb:'Give ground to preserve the relationship.' },
-];
-
-// Engagement questions (1–7 scale)
-const ENG_QUESTIONS = [
-  { id:'accuracy',   q:'How accurately does this profile reflect how you actually handle conflict?', lo:'Not at all', hi:'Very accurately' },
-  { id:'surprise',   q:'How surprised were you by your results?',                                    lo:'Not surprised', hi:'Very surprised' },
-  { id:'useful',     q:'How useful would this kind of assessment be in a professional setting?',      lo:'Not useful', hi:'Very useful' },
-  { id:'enjoyment',  q:'How much did you enjoy taking this assessment?',                              lo:'Not at all', hi:'Very much' },
-  { id:'trust',      q:'How much do you trust that the results reflect something real about you?',    lo:'Not at all', hi:'Completely' },
-];
-
-// ══════════════════════════════════════════════════════════════════════════════
-// STATE
-// ══════════════════════════════════════════════════════════════════════════════
-
-const S = {
-  prolificId:      '',
-  completionCode:  '',
-  studyId:         window.CFG.studyId,
-  instrument:      null,
-  sessionId:       crypto.randomUUID(),
-
-  // TKI
-  tkiIdx:          0,
-  tkiAnswers:      [], // [{item, choice, rt_ms}]
-  tkiStart:        0,  // timestamp when question was displayed
-
-  // Instrument answers
-  instAnswers:     [],
-  instIdx:         0,
-  instStart:       0,
-
-  // Ranking state
-  rankOrder:       [...RANKING_STYLES].map(s => s.code),
-
-  // Computed scores
-  tkiScores:       null,
-  instScores:      null,
-
-  // Engagement
-  engAnswers:      {},
-
-  // Timing
-  surveyStart:     0,
-};
-
-// ══════════════════════════════════════════════════════════════════════════════
-// NAVIGATION & PROGRESS
-// ══════════════════════════════════════════════════════════════════════════════
-
-function goTo(screenId) {
+function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-' + screenId).classList.add('active');
+  const el = document.getElementById('screen-' + id);
+  if (el) el.classList.add('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  updateProgress(screenId);
+  updateRail(id);
 }
+function goTo(id) {
+  if (id === 'results') renderResults();
+  showScreen(id);
+  if (WAYPOINTS.has(id)) history.pushState({ screen: id }, '', '#' + id);
+}
+window.addEventListener('popstate', e => showScreen(e.state?.screen || 'splash'));
 
-function updateProgress(screenId) {
-  const map = {
-    'splash':0, 'prolific':5, 'tki-intro':8,
-    'instrument-select':72, 'saving':96, 'complete':100,
-    'results':100, 'engagement':100, 'bonus-done':100,
-  };
-  let pct = map[screenId] ?? 0;
-  if (screenId === 'tki') {
-    pct = 8 + Math.round((S.tkiIdx / TKI_ITEMS.length) * 64);
-  } else if (['ranking','pit','hybrid','slider'].includes(screenId)) {
-    const total = screenId === 'ranking' ? 1 : screenId === 'pit' ? PIT_MATCHUPS.length : TKI_ITEMS.length;
-    pct = 72 + Math.round((S.instIdx / total) * 24);
+function updateRail(id) {
+  const map = { splash:0, prolific:5, 'tki-intro':8, 'instrument-select':72, saving:96, complete:100, results:100, engagement:100, 'bonus-done':100 };
+  let p = map[id] ?? 0;
+  if (id === 'tki') p = 8 + Math.round((S.tkiIdx / TKI.length) * 64);
+  else if (['ranking','hybrid','slider'].includes(id)) {
+    const tot = id==='ranking'?1 : TKI.length;
+    p = 72 + Math.round((S.iIdx / tot) * 24);
+  } else if (id === 'pit') {
+    p = 72 + Math.round(((PS ? PS.round : 0) / PIT_MAX) * 24);
   }
-  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('rail-fill').style.width = p + '%';
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// INITIALIZATION
-// ══════════════════════════════════════════════════════════════════════════════
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const TKI = [
+  { a:{c:'As',t:'I make sure my view is heard in group conflict.'},   b:{c:'Cp',t:'I try to keep everyone feeling valued during conflict.'} },
+  { a:{c:'Rv',t:'I usually stay quiet in group conflict.'},            b:{c:'Md',t:'I try to find solutions where everyone gives a little.'} },
+  { a:{c:'Md',t:'I prefer structure that gives everyone a voice.'},    b:{c:'As',t:'I state my needs clearly, even when it\'s hard.'} },
+  { a:{c:'Fx',t:'I adapt when conversations take an unexpected turn.'},b:{c:'Cp',t:'I try to preserve connection when I disagree.'} },
+  { a:{c:'Rv',t:'I hold back when things feel tense.'},                b:{c:'Fx',t:'I ease off when the conversation gets heated.'} },
+  { a:{c:'Md',t:'I nudge people toward a workable compromise.'},       b:{c:'Cp',t:'I look out for how people are feeling during conflict.'} },
+  { a:{c:'As',t:'I say what needs to be said.'},                       b:{c:'Fx',t:'I adjust my tone to keep things calm.'} },
+  { a:{c:'Cp',t:'I help people feel included in outcomes.'},           b:{c:'Rv',t:'I wait to speak when emotions run high.'} },
+  { a:{c:'Fx',t:'I try new approaches when one isn\'t working.'},      b:{c:'Md',t:'I work to ensure every voice is heard.'} },
+  { a:{c:'Rv',t:'I stay quiet when my opinion won\'t help.'},          b:{c:'As',t:'I speak up about what matters to me.'} },
+  { a:{c:'Md',t:'I support solutions where everyone feels heard.'},    b:{c:'As',t:'I speak up when silence sends the wrong message.'} },
+  { a:{c:'Fx',t:'I change tactics to protect relationships.'},         b:{c:'Rv',t:'I give space before sharing my opinion.'} },
+  { a:{c:'Cp',t:'I lead others toward shared agreement.'},             b:{c:'Fx',t:'I shift tone to reduce tension.'} },
+  { a:{c:'As',t:'I say what I believe, even if it\'s hard.'},         b:{c:'Fx',t:'I adapt my style to reduce friction.'} },
+  { a:{c:'Rv',t:'I let others resolve things without jumping in.'},    b:{c:'Cp',t:'I work to find solutions that work for everyone.'} },
+  { a:{c:'Md',t:'I reduce tension by naming shared values.'},          b:{c:'As',t:'I speak up to keep us on track.'} },
+  { a:{c:'Fx',t:'I adapt quickly to keep conversations moving.'},      b:{c:'Cp',t:'I encourage others to understand each other\'s needs.'} },
+  { a:{c:'Rv',t:'I let the dust settle before weighing in.'},          b:{c:'Md',t:'I try to get everyone to meet in the middle.'} },
+  { a:{c:'As',t:'I speak my truth, even when it\'s disruptive.'},      b:{c:'Cp',t:'I try to build connection during disagreement.'} },
+  { a:{c:'Md',t:'I bring structure when resolution feels out of reach.'},b:{c:'Rv',t:'I don\'t get involved unless I have to.'} },
+];
+const CM = { As:'Competing', Cp:'Collaborating', Rv:'Avoiding', Md:'Compromising', Fx:'Accommodating' };
+const SI = {
+  Competing:     { tag:'You assert your position and push for what you believe is right.', body:'You\'re comfortable advocating firmly in conflict. When something matters to you, you make sure it gets heard — even if it creates friction. You tend to influence outcomes rather than defer.' },
+  Collaborating: { tag:'You dig into disagreements to find solutions that genuinely work for everyone.', body:'You invest time understanding all sides and building outcomes that address everyone\'s real concerns. You\'re willing to stay in the discomfort of a conflict until it\'s actually resolved.' },
+  Compromising:  { tag:'You find fair middle-ground that lets everyone move forward.', body:'You\'re pragmatic — willing to give a little to get a little. You help groups reach workable agreements without waiting for a perfect solution.' },
+  Avoiding:      { tag:'You step back from conflicts, engaging selectively.', body:'You\'re thoughtful about which battles are worth fighting. You often let tensions cool before weighing in, or redirect energy when conflict seems unproductive.' },
+  Accommodating: { tag:'You put the relationship first, giving ground to preserve harmony.', body:'You\'re flexible and low-ego in conflict — often willing to defer to preserve goodwill. You value the relationship over winning.' },
+};
+const PIT_CARDS = {
+  As: [
+    { body:"When I think I'm right or something important is at stake, I say so — directly and confidently. I don't back down easily, and I'd rather address the issue head-on than dance around it.", eg:"If I disagree with a decision being made, I'll make my case clearly even if it creates some tension." },
+    { body:"I'm not afraid of disagreement. If I have a strong view I'll defend it, and I expect others to push back if they disagree rather than just go along.", eg:"I'll repeat my point if I don't feel like I've been heard — backing down just because someone pushes back isn't my default." },
+    { body:"I think clarity is a kindness in conflict. I'd rather say exactly what I think and deal with the reaction than be vague about where I stand to avoid friction.", eg:"People know where I stand. I don't leave much ambiguity about my position when something matters to me." },
+    { body:"When something matters, I'm willing to sustain the discomfort of disagreement to make sure the right outcome happens. Conflict doesn't make me want to back down — it makes me more focused.", eg:"I've been told I'm persistent. When I believe I'm right, I keep making the case until it gets heard." },
+  ],
+  Cp: [
+    { body:"When conflict comes up, my instinct is to understand where the other person is coming from before sharing my own view. I'd rather take the time to work through it together than walk away with anything unresolved.", eg:"In a disagreement, I'm usually the one asking questions and trying to understand everyone's perspective." },
+    { body:"I think the best outcomes come from genuinely exploring both sides. I'm not satisfied with just splitting the difference — I want to find something that actually works for everyone.", eg:"I'll keep the conversation going until we find something we both actually believe in, not just tolerate." },
+    { body:"When I'm in a conflict I want to understand what the other person actually needs, not just what they're asking for. The real issue is usually underneath the surface disagreement.", eg:"I often find that once we slow down and really talk it through, the solution becomes obvious to both of us." },
+    { body:"I see conflict as something worth investing in. If a relationship or outcome matters, it's worth the discomfort of working through it properly rather than just patching it over.", eg:"I'll come back to an unresolved issue even if it's easier to let it drop, because I care about getting it right." },
+  ],
+  Rv: [
+    { body:"My first instinct is to withdraw or step back when conflict occurs, hoping it will resolve itself on its own. I often only step in when absolutely necessary.", eg:"If something bothers me about how a situation was handled, I'm more likely to let it go than bring it up." },
+    { body:"I pick my battles carefully. Most conflicts aren't worth the energy, and a lot of things sort themselves out if you give them enough space.", eg:"I'll often decide that something isn't worth addressing and just move on, even if it bothered me." },
+    { body:"When tension rises, my instinct is to create some distance. I'd rather let things cool down than say something in the heat of the moment that makes it worse.", eg:"I'm more likely to go quiet and wait for the right moment than to address something head-on when emotions are high." },
+    { body:"I find conflict draining and I'm selective about when I engage. If the stakes aren't high enough to justify the discomfort, I'll usually find a way to sidestep it.", eg:"I've gotten pretty good at changing the subject or redirecting away from tension before it escalates." },
+  ],
+  Md: [
+    { body:"When there's a disagreement, I gravitate toward finding something that works for both of us — even if neither of us gets everything we want. A fair outcome matters more to me than a perfect one.", eg:"When two people on a team disagree, I'm often the one proposing a middle path that splits the difference." },
+    { body:"I'm practical about conflict. I'd rather find a workable solution quickly than spend a lot of time trying to get everything I want. Something both sides can live with is usually good enough.", eg:"I'll often say 'okay, you take this part and I'll take that part' just to move things forward." },
+    { body:"Fairness is important to me in conflict. I'm not trying to win — I'm trying to find something that feels equitable, where we both give a little and gain a little.", eg:"I naturally think in terms of trade-offs. What can I offer? What do I need? Let's find the overlap." },
+    { body:"Getting to resolution matters more to me than holding out for the ideal outcome. I can usually find a middle ground and move on without feeling like I lost.", eg:"I'm comfortable with partial wins — getting 70% of what I wanted and giving up 30% feels fine to me." },
+  ],
+  Fx: [
+    { body:"I tend to prioritize the relationship over being right. If the other person feels strongly, I'll often adjust my position — especially if the issue doesn't feel worth the friction.", eg:"If a friend or colleague pushes back on my idea, I'll usually defer to them rather than push harder for my way." },
+    { body:"Keeping things smooth matters to me. If I can tell someone is upset or that an issue is causing tension, my instinct is to ease up on my position and give a little.", eg:"I'll often say 'it's fine, let's do it your way' even when I have a preference, just to keep things moving." },
+    { body:"I'm genuinely more invested in the other person's experience than in winning the argument. If giving ground makes things better for them, that feels like the right call to me.", eg:"I'll let go of my position fairly easily if I can see it matters more to the other person than it does to me." },
+    { body:"I don't hold onto positions tightly. I can usually find something to agree with in the other person's view, and I'd rather acknowledge that than dig in unnecessarily.", eg:"I tend to find myself saying 'you know what, you're right' more often than most people I know." },
+  ],
+};
+// Track which card index was used per style to avoid repeats
+const PIT_USED = { As:[], Cp:[], Rv:[], Md:[], Fx:[] };
+function getPitCard(code) {
+  const cards = PIT_CARDS[code], used = PIT_USED[code];
+  const avail = cards.map((_,i)=>i).filter(i=>!used.includes(i));
+  const idx = avail.length ? avail[Math.floor(Math.random()*avail.length)] : (PIT_USED[code]=[], 0);
+  PIT_USED[code].push(idx);
+  return cards[idx];
+}
+const PIT_CODES = ['As','Cp','Rv','Md','Fx'];
+const PIT_MAX   = 15;
+const PIT_MIN   = 6;
+// PIT_STATE is reset each time the pit starts (see startInst)
+let PS = null;
 
+const RANK_STYLES = [
+  { c:'As', n:'Competing',     b:'Push for your position; advocate firmly.' },
+  { c:'Cp', n:'Collaborating', b:'Dig in together to find solutions everyone can live with.' },
+  { c:'Rv', n:'Avoiding',      b:'Step back from conflict; engage selectively.' },
+  { c:'Md', n:'Compromising',  b:'Find a fair middle ground; give and take.' },
+  { c:'Fx', n:'Accommodating', b:'Give ground to preserve the relationship.' },
+];
+const ENG_Q = [
+  { id:'accuracy',  q:'How accurately does this profile reflect how you actually handle conflict?', lo:'Not at all', hi:'Very accurately' },
+  { id:'surprise',  q:'How surprised were you by your results?',                                   lo:'Not surprised', hi:'Very surprised' },
+  { id:'useful',    q:'How useful would this assessment be in a professional setting?',             lo:'Not useful', hi:'Very useful' },
+  { id:'enjoyment', q:'How much did you enjoy taking this assessment?',                             lo:'Not at all', hi:'Very much' },
+  { id:'trust',     q:'How much do you trust the results reflect something real about you?',        lo:'Not at all', hi:'Completely' },
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+const S = {
+  pid:'', cc:'', study: window.CFG.studyId, inst: null,
+  sid: crypto.randomUUID(),
+  tkiIdx:0, tkiA:[], tkiT:0,
+  iA:[], iIdx:0, iT:0,
+  rOrder: RANK_STYLES.map(s=>s.c),
+  tkiScores:null, iScores:null,
+  engA:{}, t0:0,
+};
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
-  const params = new URLSearchParams(window.location.search);
-
-  // Prolific ID
-  const pid = params.get(window.CFG.prolificParam) || params.get('pid') || '';
+  initTheme();
+  initLayout();
+  const p = new URLSearchParams(window.location.search);
+  const pid = p.get(window.CFG.prolificParam) || p.get('pid') || '';
   if (pid) {
-    S.prolificId = pid;
-    document.getElementById('pid-auto-block').style.display = 'block';
-    document.getElementById('pid-display').textContent = pid;
-    document.getElementById('pid-input').value = pid;
+    S.pid = pid;
+    document.getElementById('pid-auto').style.display = 'block';
+    document.getElementById('pid-chip').textContent = pid;
+    document.getElementById('pid-inp').value = pid;
   }
-
-  // Completion code
-  S.completionCode = params.get(window.CFG.ccParam) || '';
-
-  // Instrument (skip selector if pre-set)
-  const inst = params.get(window.CFG.instrumentParam);
-  if (inst && ['ranking','pit','hybrid','slider'].includes(inst)) {
-    S.instrument = inst;
-  }
-
-  S.surveyStart = Date.now();
+  S.cc    = p.get(window.CFG.ccParam) || '';
+  S.study = p.get('sid') || window.CFG.studyId;
+  const inst = p.get(window.CFG.instrumentParam);
+  if (inst && ['ranking','pit','hybrid','slider'].includes(inst)) S.inst = inst;
+  S.t0 = Date.now();
+  history.replaceState({ screen:'splash' }, '', window.location.href);
+  buildEng();
 });
 
-// ══════════════════════════════════════════════════════════════════════════════
-// PROLIFIC
-// ══════════════════════════════════════════════════════════════════════════════
-
+// ── PROLIFIC ──────────────────────────────────────────────────────────────────
 function confirmProlific() {
-  const val = document.getElementById('pid-input').value.trim();
-  const err = document.getElementById('pid-error');
-  if (!val) { err.style.display = 'block'; return; }
-  err.style.display = 'none';
-  S.prolificId = val;
-  goTo('tki-intro');
+  const v = document.getElementById('pid-inp').value.trim();
+  const e = document.getElementById('pid-err');
+  if (!v) { e.style.display='block'; return; }
+  e.style.display='none'; S.pid=v; goTo('tki-intro');
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// TKI SURVEY
-// ══════════════════════════════════════════════════════════════════════════════
+// ── TKI ───────────────────────────────────────────────────────────────────────
+function startTKI() { S.tkiIdx=0; S.tkiA=[]; showScreen('tki'); updateRail('tki'); renderTKI(0); }
 
-function startTKI() {
-  S.tkiIdx = 0;
-  S.tkiAnswers = [];
-  goTo('tki');
-  renderTKIItem(0);
+function renderTKI(i) {
+  const it=TKI[i], p=Math.round((i/TKI.length)*100);
+  document.getElementById('tki-fill').style.width=p+'%';
+  document.getElementById('tki-lbl').textContent=`Question ${i+1} of ${TKI.length}`;
+  document.getElementById('tki-pct').textContent=p+'%';
+  document.getElementById('tki-a-txt').textContent=it.a.t;
+  document.getElementById('tki-b-txt').textContent=it.b.t;
+  const pr=S.tkiA[i];
+  document.getElementById('tki-a').className='choice'+(pr==='a'?' sel':pr==='b'?' unsel':'');
+  document.getElementById('tki-b').className='choice'+(pr==='b'?' sel':pr==='a'?' unsel':'');
+  document.getElementById('tki-prev').style.display=i>0?'':'none';
+  document.getElementById('tki-next').style.display=pr!=null?'':'none';
+  S.tkiT=Date.now(); updateRail('tki');
 }
 
-function renderTKIItem(idx) {
-  const item = TKI_ITEMS[idx];
-  const pct  = Math.round((idx / TKI_ITEMS.length) * 100);
-  document.getElementById('tki-fill').style.width  = pct + '%';
-  document.getElementById('tki-label').textContent = `Question ${idx+1} of ${TKI_ITEMS.length}`;
-  document.getElementById('tki-pct').textContent   = pct + '%';
-  document.getElementById('tki-a-txt').textContent = item.a.text;
-  document.getElementById('tki-b-txt').textContent = item.b.text;
-
-  const prev = S.tkiAnswers[idx];
-  const ca   = document.getElementById('tki-a');
-  const cb   = document.getElementById('tki-b');
-  ca.className = 'choice' + (prev==='a' ? ' sel' : prev==='b' ? ' unsel' : '');
-  cb.className = 'choice' + (prev==='b' ? ' sel' : prev==='a' ? ' unsel' : '');
-
-  document.getElementById('tki-prev').style.display = idx > 0 ? '' : 'none';
-  document.getElementById('tki-next').style.display = prev != null ? '' : 'none';
-  S.tkiStart = Date.now();
-  updateProgress('tki');
+function tkiSelect(ch) {
+  const rt=Date.now()-S.tkiT;
+  S.tkiA[S.tkiIdx]=ch;
+  if(!S.tkiA._rt) S.tkiA._rt={};
+  if(!S.tkiA._rt[S.tkiIdx]) S.tkiA._rt[S.tkiIdx]=rt;
+  document.getElementById('tki-a').className='choice'+(ch==='a'?' sel':' unsel');
+  document.getElementById('tki-b').className='choice'+(ch==='b'?' sel':' unsel');
+  document.getElementById('tki-next').style.display='';
+  setTimeout(()=>{ if(S.tkiIdx<TKI.length-1){S.tkiIdx++;renderTKI(S.tkiIdx);}else tkiDone(); },380);
 }
+function tkiNext() { if(S.tkiIdx<TKI.length-1){S.tkiIdx++;renderTKI(S.tkiIdx);}else tkiDone(); }
+function tkiPrev() { if(S.tkiIdx>0){S.tkiIdx--;renderTKI(S.tkiIdx);} }
 
-function tkiSelect(choice) {
-  const rt = Date.now() - S.tkiStart;
-  S.tkiAnswers[S.tkiIdx] = choice;
-
-  // Store with response time (fill in gaps for nav'd-back items)
-  if (!S.tkiAnswers._rt) S.tkiAnswers._rt = {};
-  if (!S.tkiAnswers._rt[S.tkiIdx]) S.tkiAnswers._rt[S.tkiIdx] = rt;
-
-  const ca = document.getElementById('tki-a');
-  const cb = document.getElementById('tki-b');
-  ca.className = 'choice' + (choice==='a' ? ' sel' : ' unsel');
-  cb.className = 'choice' + (choice==='b' ? ' sel' : ' unsel');
-  document.getElementById('tki-next').style.display = '';
-
-  // Auto-advance
-  setTimeout(() => {
-    if (S.tkiIdx < TKI_ITEMS.length - 1) {
-      S.tkiIdx++;
-      renderTKIItem(S.tkiIdx);
-    } else {
-      tkiFinish();
-    }
-  }, 380);
-}
-
-function tkiNext() {
-  if (S.tkiIdx < TKI_ITEMS.length - 1) { S.tkiIdx++; renderTKIItem(S.tkiIdx); }
-  else tkiFinish();
-}
-function tkiPrev() {
-  if (S.tkiIdx > 0) { S.tkiIdx--; renderTKIItem(S.tkiIdx); }
-}
-
-function tkiFinish() {
-  // Build clean answer array with rt
-  const rt = S.tkiAnswers._rt || {};
-  S.tkiAnswers = TKI_ITEMS.map((item, i) => ({
-    item: i,
-    choice: S.tkiAnswers[i] || null,
-    rt_ms:  rt[i] || null,
-    style_chosen: S.tkiAnswers[i] ? CODE_MAP[item[S.tkiAnswers[i]].code] : null,
-  }));
-  S.tkiScores = scoreTKI();
-
-  if (S.instrument) {
-    startInstrument();
-  } else {
-    goTo('instrument-select');
-  }
+function tkiDone() {
+  const rt=S.tkiA._rt||{};
+  S.tkiA=TKI.map((it,i)=>({item:i,choice:S.tkiA[i]||null,rt_ms:rt[i]||null,style:S.tkiA[i]?CM[it[S.tkiA[i]].c]:null}));
+  S.tkiScores=scoreTKI();
+  if(S.inst) startInst(); else goTo('instrument-select');
 }
 
 function scoreTKI() {
-  const counts = { As:0, Cp:0, Rv:0, Md:0, Fx:0 };
-  S.tkiAnswers.forEach(a => {
-    if (a.choice) counts[TKI_ITEMS[a.item][a.choice].code]++;
-  });
-  return Object.entries(counts)
-    .map(([code, count]) => ({ style: CODE_MAP[code], code, count, max: 8 }))
-    .sort((a,b) => b.count - a.count)
-    .map((s,i) => ({ ...s, rank: i+1 }));
+  const c={As:0,Cp:0,Rv:0,Md:0,Fx:0};
+  S.tkiA.forEach(a=>{ if(a.choice) c[TKI[a.item][a.choice].c]++; });
+  return Object.entries(c).map(([k,v])=>({style:CM[k],code:k,count:v,max:8}))
+    .sort((a,b)=>b.count-a.count).map((s,i)=>({...s,rank:i+1}));
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// INSTRUMENT SELECT
-// ══════════════════════════════════════════════════════════════════════════════
-
-function selectInstrument(name) {
-  S.instrument = name;
-  document.querySelectorAll('.i-card').forEach(c => c.classList.remove('sel'));
-  document.getElementById('ic-' + name).classList.add('sel');
-  document.getElementById('instrument-next-btn').disabled = false;
+// ── INSTRUMENT ────────────────────────────────────────────────────────────────
+function selectInst(n) {
+  S.inst=n;
+  document.querySelectorAll('.i-card').forEach(c=>c.classList.remove('sel'));
+  document.getElementById('ic-'+n).classList.add('sel');
+  document.getElementById('inst-next').disabled=false;
+}
+function startInst() {
+  if(!S.inst) return;
+  S.iA=[]; S.iIdx=0; S.iT=Date.now();
+  if(S.inst==='ranking') { buildRanking(); showScreen('ranking'); }
+  if(S.inst==='pit')     { startPit(); }
+  if(S.inst==='hybrid')  { renderHyb(0);   showScreen('hybrid'); }
+  if(S.inst==='slider')  { renderSl(0);    showScreen('slider'); }
+  updateRail(S.inst);
 }
 
-function startInstrument() {
-  if (!S.instrument) return;
-  S.instAnswers = [];
-  S.instIdx     = 0;
-  S.instStart   = Date.now();
-
-  if (S.instrument === 'ranking')  { buildRanking();     goTo('ranking'); }
-  if (S.instrument === 'pit')      { renderPitItem(0);   goTo('pit'); }
-  if (S.instrument === 'hybrid')   { renderHybridItem(0);goTo('hybrid'); }
-  if (S.instrument === 'slider')   { renderSliderItem(0);goTo('slider'); }
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// RANKING
-// ══════════════════════════════════════════════════════════════════════════════
-
+// ── RANKING ───────────────────────────────────────────────────────────────────
 function buildRanking() {
-  const list = document.getElementById('rank-list');
-  list.innerHTML = '';
-  S.rankOrder.forEach((code, idx) => {
-    const style = RANKING_STYLES.find(s => s.code === code);
-    const li = document.createElement('li');
-    li.className = 'rank-item';
-    li.dataset.code = code;
-    li.draggable = true;
-    li.innerHTML = `
-      <span class="rank-n">${idx+1}</span>
-      <span class="rank-handle">⠿</span>
-      <div><div class="rank-name">${style.name}</div><div class="rank-blurb">${style.blurb}</div></div>
-    `;
-    li.addEventListener('dragstart', dragStart);
-    li.addEventListener('dragover',  dragOver);
-    li.addEventListener('drop',      dragDrop);
-    li.addEventListener('dragend',   dragEnd);
-    list.appendChild(li);
+  const ul=document.getElementById('rank-list'); ul.innerHTML='';
+  S.rOrder.forEach((c,i)=>{
+    const s=RANK_STYLES.find(x=>x.c===c), li=document.createElement('li');
+    li.className='rank-item'; li.dataset.c=c; li.draggable=true;
+    li.innerHTML=`<span class="rank-n">${i+1}</span><span class="rank-grip">⠿</span><div><div class="rank-name">${s.n}</div><div class="rank-blurb">${s.b}</div></div>`;
+    li.addEventListener('dragstart',ds); li.addEventListener('dragover',dov); li.addEventListener('drop',dd); li.addEventListener('dragend',de);
+    ul.appendChild(li);
   });
 }
-
-let _dragSrc = null;
-function dragStart(e) { _dragSrc = this; this.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
-function dragOver(e)  { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; this.classList.add('drag-over'); }
-function dragDrop(e)  {
+let _ds=null;
+function ds(e){_ds=this;this.classList.add('dragging');e.dataTransfer.effectAllowed='move';}
+function dov(e){e.preventDefault();e.dataTransfer.dropEffect='move';this.classList.add('drag-over');}
+function dd(e){
   e.stopPropagation();
-  if (_dragSrc !== this) {
-    const list  = this.parentNode;
-    const items = [...list.querySelectorAll('.rank-item')];
-    const fromI = items.indexOf(_dragSrc);
-    const toI   = items.indexOf(this);
-    if (fromI < toI) list.insertBefore(_dragSrc, this.nextSibling);
-    else             list.insertBefore(_dragSrc, this);
-    // Renumber
-    [...list.querySelectorAll('.rank-item')].forEach((li, i) => {
-      li.querySelector('.rank-n').textContent = i + 1;
-      li.classList.remove('drag-over');
-    });
-    S.rankOrder = [...list.querySelectorAll('.rank-item')].map(li => li.dataset.code);
+  if(_ds!==this){
+    const ul=this.parentNode,its=[...ul.querySelectorAll('.rank-item')];
+    const fi=its.indexOf(_ds),ti=its.indexOf(this);
+    if(fi<ti)ul.insertBefore(_ds,this.nextSibling);else ul.insertBefore(_ds,this);
+    [...ul.querySelectorAll('.rank-item')].forEach((li,i)=>{li.querySelector('.rank-n').textContent=i+1;li.classList.remove('drag-over');});
+    S.rOrder=[...ul.querySelectorAll('.rank-item')].map(li=>li.dataset.c);
   }
 }
-function dragEnd() { this.classList.remove('dragging'); document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over')); }
+function de(){this.classList.remove('dragging');document.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over'));}
 
-function finishInstrument(type) {
-  const rt = Date.now() - S.instStart;
-  if (type === 'ranking') {
-    S.instAnswers = S.rankOrder.map((code, i) => ({ style: CODE_MAP[code], code, rank: i+1, rt_ms: rt }));
-    S.instScores  = S.instAnswers;
+function finishRanking() {
+  S.iA=S.rOrder.map((c,i)=>({style:CM[c],code:c,rank:i+1,rt_ms:Date.now()-S.iT}));
+  S.iScores=S.iA; completeSurvey();
+}
+
+// ── PIT — ADAPTIVE ENGINE ─────────────────────────────────────────────────────
+
+function pitInitState() {
+  PS = {
+    wins:    { As:0, Cp:0, Rv:0, Md:0, Fx:0 },
+    matches: { As:0, Cp:0, Rv:0, Md:0, Fx:0 },
+    history: [], // {round, codeA, codeB, winner, rt_ms, wrA, wrB}
+    round:   0,
+    codeA:   null,
+    codeB:   null,
+  };
+}
+
+function pitWR(code) {
+  return PS.matches[code] === 0 ? 0.5 : PS.wins[code] / PS.matches[code];
+}
+
+function pitPickNext() {
+  // Sort styles by current win rate descending
+  const ranked = [...PIT_CODES].sort((a,b) => pitWR(b) - pitWR(a));
+
+  // Count how many times each pair has been compared
+  const pairCount = {};
+  PS.history.forEach(h => {
+    const key = [h.codeA, h.codeB].sort().join('_');
+    pairCount[key] = (pairCount[key] || 0) + 1;
+  });
+
+  // Among all adjacent pairs in the ranking, pick the one with:
+  // smallest win-rate gap (most uncertain) + penalty for repeated comparisons
+  let bestA = null, bestB = null, bestScore = Infinity;
+  for (let i = 0; i < ranked.length - 1; i++) {
+    const a = ranked[i], b = ranked[i+1];
+    const gap = pitWR(a) - pitWR(b); // always >= 0 since sorted
+    const key = [a,b].sort().join('_');
+    const repeats = pairCount[key] || 0;
+    const score = gap + repeats * 0.4;
+    if (score < bestScore) { bestScore = score; bestA = a; bestB = b; }
   }
-  completeSurvey();
+  return [bestA, bestB];
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// PIT
-// ══════════════════════════════════════════════════════════════════════════════
-
-function renderPitItem(idx) {
-  const m   = PIT_MATCHUPS[idx];
-  const pct = Math.round((idx / PIT_MATCHUPS.length) * 100);
-  document.getElementById('pit-fill').style.width  = pct + '%';
-  document.getElementById('pit-label').textContent = `Match ${idx+1} of ${PIT_MATCHUPS.length}`;
-  document.getElementById('pit-pct').textContent   = pct + '%';
-  document.getElementById('pit-a').textContent     = PIT_DESC[m[0]];
-  document.getElementById('pit-b').textContent     = PIT_DESC[m[1]];
-
-  const prev = S.instAnswers[idx];
-  document.getElementById('pit-a').className = 'pit-opt' + (prev==='a' ? ' sel' : prev==='b' ? ' unsel' : '');
-  document.getElementById('pit-b').className = 'pit-opt' + (prev==='b' ? ' sel' : prev==='a' ? ' unsel' : '');
-  document.getElementById('pit-prev').style.display = idx > 0 ? '' : 'none';
-  document.getElementById('pit-next').style.display = prev != null ? '' : 'none';
-  S.instStart = Date.now();
-  updateProgress('pit');
+function pitIsSettled() {
+  if (PS.round < PIT_MIN) return false;
+  if (PS.round >= PIT_MAX) return true;
+  // Every style must have played at least 2 matches
+  if (!PIT_CODES.every(c => PS.matches[c] >= 2)) return false;
+  // All adjacent win-rate gaps must be >= 0.28
+  const ranked = [...PIT_CODES].sort((a,b) => pitWR(b) - pitWR(a));
+  for (let i = 0; i < ranked.length - 1; i++) {
+    if (pitWR(ranked[i]) - pitWR(ranked[i+1]) < 0.28) return false;
+  }
+  return true;
 }
 
-function pitSelect(choice) {
-  const rt = Date.now() - S.instStart;
-  if (!S.instAnswers._rt) S.instAnswers._rt = {};
-  if (!S.instAnswers._rt[S.instIdx]) S.instAnswers._rt[S.instIdx] = rt;
-  S.instAnswers[S.instIdx] = choice;
+function renderPit(codeA, codeB) {
+  PS.codeA = codeA; PS.codeB = codeB;
+  const pct = Math.round((PS.round / PIT_MAX) * 100);
+  document.getElementById('pit-fill').style.width = pct + '%';
+  document.getElementById('pit-lbl').textContent = `Round ${PS.round + 1}`;
+  document.getElementById('pit-pct').textContent = `Up to ${PIT_MAX}`;
 
-  document.getElementById('pit-a').className = 'pit-opt' + (choice==='a' ? ' sel' : ' unsel');
-  document.getElementById('pit-b').className = 'pit-opt' + (choice==='b' ? ' sel' : ' unsel');
-  document.getElementById('pit-next').style.display = '';
+  const cardA = getPitCard(codeA), cardB = getPitCard(codeB);
+  const html = (lbl, card) => `
+    <div class="pit-opt-lbl">${lbl}</div>
+    <p class="pit-opt-body">${card.body}</p>
+    <p class="pit-opt-eg">${card.eg}</p>`;
+  document.getElementById('pit-a').innerHTML = html('Option A', cardA);
+  document.getElementById('pit-b').innerHTML = html('Option B', cardB);
+  document.getElementById('pit-a').className = 'pit-opt';
+  document.getElementById('pit-b').className = 'pit-opt';
+  // No prev button — adaptive history can't be cleanly undone
+  document.getElementById('pit-prev').style.display = 'none';
+  document.getElementById('pit-next').style.display = 'none';
+  S.iT = Date.now();
+  updateRail('pit');
+}
+
+function pitSel(ch) {
+  const rt = Date.now() - S.iT;
+  const winner = ch === 'a' ? PS.codeA : PS.codeB;
+  const loser  = ch === 'a' ? PS.codeB : PS.codeA;
+
+  // Record result
+  PS.wins[winner]++;
+  PS.matches[winner]++;
+  PS.matches[loser]++;
+  PS.history.push({
+    round: PS.round + 1,
+    codeA: PS.codeA, codeB: PS.codeB,
+    winner, loser, rt_ms: rt,
+    wrA: pitWR(PS.codeA), wrB: pitWR(PS.codeB),
+  });
+  PS.round++;
+
+  // Animate win/lose
+  const winId  = ch === 'a' ? 'pit-a' : 'pit-b';
+  const loseId = ch === 'a' ? 'pit-b' : 'pit-a';
+  document.getElementById(winId).className  = 'pit-opt winning';
+  document.getElementById(loseId).className = 'pit-opt losing';
 
   setTimeout(() => {
-    if (S.instIdx < PIT_MATCHUPS.length - 1) { S.instIdx++; renderPitItem(S.instIdx); }
-    else scorePit();
-  }, 380);
+    if (pitIsSettled()) {
+      scorePit();
+    } else {
+      const [nA, nB] = pitPickNext();
+      renderPit(nA, nB);
+    }
+  }, 500);
 }
 
-function pitNext() {
-  if (S.instIdx < PIT_MATCHUPS.length - 1) { S.instIdx++; renderPitItem(S.instIdx); }
-  else scorePit();
-}
-function pitPrev() { if (S.instIdx > 0) { S.instIdx--; renderPitItem(S.instIdx); } }
+// No pitNext/pitPrev for adaptive — each question depends on prior answers
+function pitNext() {} // intentionally empty (button is hidden)
+function pitPrev() {} // intentionally empty (button is hidden)
 
 function scorePit() {
-  const rt = S.instAnswers._rt || {};
-  const wins = { As:0, Cp:0, Rv:0, Md:0, Fx:0 };
-  PIT_MATCHUPS.forEach((m, i) => {
-    const choice = S.instAnswers[i];
-    if (choice === 'a') wins[m[0]]++;
-    if (choice === 'b') wins[m[1]]++;
-  });
-  S.instAnswers = PIT_MATCHUPS.map((m, i) => ({
-    item: i, matchup: m.map(c => CODE_MAP[c]), choice: S.instAnswers[i] || null,
-    winner: S.instAnswers[i] ? CODE_MAP[m[S.instAnswers[i]==='a'?0:1]] : null,
-    rt_ms: rt[i] || null,
-  }));
-  S.instScores = Object.entries(wins)
-    .map(([code, w]) => ({ style: CODE_MAP[code], code, wins: w, matches: 4 }))
-    .sort((a,b) => b.wins - a.wins)
+  S.iA = PS.history; // full matchup log as the answer record
+  S.iScores = PIT_CODES
+    .map(c => ({
+      style: CM[c], code: c,
+      wins: PS.wins[c], matches: PS.matches[c],
+      win_rate: PS.matches[c] > 0 ? +(PS.wins[c] / PS.matches[c]).toFixed(3) : 0,
+    }))
+    .sort((a,b) => b.win_rate - a.win_rate || b.wins - a.wins)
     .map((s,i) => ({ ...s, rank: i+1 }));
   completeSurvey();
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// HYBRID LIKERT
-// ══════════════════════════════════════════════════════════════════════════════
-
-function renderHybridItem(idx) {
-  const item = TKI_ITEMS[idx];
-  const pct  = Math.round((idx / TKI_ITEMS.length) * 100);
-  document.getElementById('hybrid-fill').style.width  = pct + '%';
-  document.getElementById('hybrid-label').textContent = `Pair ${idx+1} of ${TKI_ITEMS.length}`;
-  document.getElementById('hybrid-pct').textContent   = pct + '%';
-
-  const prevA = (S.instAnswers[idx] || {}).a;
-  const prevB = (S.instAnswers[idx] || {}).b;
-
-  document.getElementById('hybrid-card').innerHTML = `
-    <div class="likert-pair-lbl">Statement ${idx+1}</div>
-    <div class="likert-row" id="lk-row-a">
-      <div class="likert-stmt">"${item.a.text}"</div>
-      <div class="likert-scale" id="lk-scale-a">
-        ${[1,2,3,4,5].map(v=>`<button class="lk-btn${prevA===v?' active':''}" onclick="hybridRate('a',${v})">${v}</button>`).join('')}
-      </div>
-      <div class="lk-anchors"><span>Not at all like me</span><span>Very much like me</span></div>
-    </div>
-    <div class="likert-row" id="lk-row-b">
-      <div class="likert-stmt">"${item.b.text}"</div>
-      <div class="likert-scale" id="lk-scale-b">
-        ${[1,2,3,4,5].map(v=>`<button class="lk-btn${prevB===v?' active':''}" onclick="hybridRate('b',${v})">${v}</button>`).join('')}
-      </div>
-      <div class="lk-anchors"><span>Not at all like me</span><span>Very much like me</span></div>
-    </div>
-  `;
-
-  document.getElementById('hybrid-prev').style.display = idx > 0 ? '' : 'none';
-  checkHybridNext();
-  S.instStart = Date.now();
-  updateProgress('hybrid');
+function startPit() {
+  pitInitState();
+  const [cA, cB] = pitPickNext();
+  renderPit(cA, cB);
+  showScreen('pit');
+  updateRail('pit');
 }
 
-function hybridRate(side, val) {
-  const rt = Date.now() - S.instStart;
-  if (!S.instAnswers[S.instIdx]) S.instAnswers[S.instIdx] = {};
-  if (!S.instAnswers[S.instIdx].rt) S.instAnswers[S.instIdx].rt = {};
-  S.instAnswers[S.instIdx][side] = val;
-  S.instAnswers[S.instIdx].rt[side] = rt;
-
-  // Update buttons
-  const scale = document.getElementById('lk-scale-' + side);
-  scale.querySelectorAll('.lk-btn').forEach((btn, i) => {
-    btn.classList.toggle('active', i+1 === val);
-  });
-  checkHybridNext();
+// ── HYBRID ────────────────────────────────────────────────────────────────────
+function renderHyb(i) {
+  const it=TKI[i],p=Math.round((i/TKI.length)*100);
+  document.getElementById('hyb-fill').style.width=p+'%';
+  document.getElementById('hyb-lbl').textContent=`Pair ${i+1} of ${TKI.length}`;
+  document.getElementById('hyb-pct').textContent=p+'%';
+  const pa=(S.iA[i]||{}).a,pb=(S.iA[i]||{}).b;
+  document.getElementById('hyb-card').innerHTML=`
+    <div class="lk-lbl">Statement ${i+1}</div>
+    <div class="lk-row"><div class="lk-stmt">"${it.a.t}"</div>
+      <div class="lk-scale" id="lks-a">${[1,2,3,4,5].map(v=>`<button class="lk-btn${pa===v?' on':''}" onclick="hybRate('a',${v})">${v}</button>`).join('')}</div>
+      <div class="lk-ends"><span>Not at all like me</span><span>Very much like me</span></div></div>
+    <div class="lk-row"><div class="lk-stmt">"${it.b.t}"</div>
+      <div class="lk-scale" id="lks-b">${[1,2,3,4,5].map(v=>`<button class="lk-btn${pb===v?' on':''}" onclick="hybRate('b',${v})">${v}</button>`).join('')}</div>
+      <div class="lk-ends"><span>Not at all like me</span><span>Very much like me</span></div></div>`;
+  document.getElementById('hyb-prev').style.display=i>0?'':'none';
+  chkHyb(); S.iT=Date.now(); updateRail('hybrid');
 }
-
-function checkHybridNext() {
-  const a = (S.instAnswers[S.instIdx] || {}).a;
-  const b = (S.instAnswers[S.instIdx] || {}).b;
-  document.getElementById('hybrid-next').style.display = (a != null && b != null) ? '' : 'none';
+function hybRate(side,val){
+  if(!S.iA[S.iIdx])S.iA[S.iIdx]={};
+  if(!S.iA[S.iIdx].rt)S.iA[S.iIdx].rt={};
+  S.iA[S.iIdx][side]=val; S.iA[S.iIdx].rt[side]=Date.now()-S.iT;
+  document.getElementById('lks-'+side).querySelectorAll('.lk-btn').forEach((b,i)=>b.classList.toggle('on',i+1===val));
+  chkHyb();
 }
-
-function hybridNext() {
-  if (S.instIdx < TKI_ITEMS.length - 1) { S.instIdx++; renderHybridItem(S.instIdx); }
-  else scoreHybrid();
-}
-function hybridPrev() { if (S.instIdx > 0) { S.instIdx--; renderHybridItem(S.instIdx); } }
-
-function scoreHybrid() {
-  const totals = { As:0, Cp:0, Rv:0, Md:0, Fx:0 };
-  const counts  = { As:0, Cp:0, Rv:0, Md:0, Fx:0 };
-  S.instAnswers.forEach((ans, i) => {
-    if (!ans) return;
-    const item = TKI_ITEMS[i];
-    if (ans.a != null) { totals[item.a.code] += ans.a; counts[item.a.code]++; }
-    if (ans.b != null) { totals[item.b.code] += ans.b; counts[item.b.code]++; }
-  });
-  S.instScores = Object.entries(totals)
-    .map(([code, total]) => ({ style: CODE_MAP[code], code, total, count: counts[code], avg: counts[code]?+(total/counts[code]).toFixed(2):0 }))
-    .sort((a,b) => b.total - a.total)
-    .map((s,i) => ({ ...s, rank: i+1 }));
+function chkHyb(){ const a=(S.iA[S.iIdx]||{}).a,b=(S.iA[S.iIdx]||{}).b; document.getElementById('hyb-next').style.display=(a!=null&&b!=null)?'':'none'; }
+function hybNext(){if(S.iIdx<TKI.length-1){S.iIdx++;renderHyb(S.iIdx);}else scoreHyb();}
+function hybPrev(){if(S.iIdx>0){S.iIdx--;renderHyb(S.iIdx);}}
+function scoreHyb(){
+  const tot={As:0,Cp:0,Rv:0,Md:0,Fx:0},cnt={As:0,Cp:0,Rv:0,Md:0,Fx:0};
+  S.iA.forEach((a,i)=>{if(!a)return;const it=TKI[i];if(a.a!=null){tot[it.a.c]+=a.a;cnt[it.a.c]++;}if(a.b!=null){tot[it.b.c]+=a.b;cnt[it.b.c]++;}});
+  S.iScores=Object.entries(tot).map(([c,t])=>({style:CM[c],code:c,total:t,count:cnt[c],avg:cnt[c]?+(t/cnt[c]).toFixed(2):0})).sort((a,b)=>b.total-a.total).map((s,i)=>({...s,rank:i+1}));
   completeSurvey();
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// VISUAL SLIDER
-// ══════════════════════════════════════════════════════════════════════════════
-
-function renderSliderItem(idx) {
-  const item = TKI_ITEMS[idx];
-  const pct  = Math.round((idx / TKI_ITEMS.length) * 100);
-  document.getElementById('slider-fill').style.width  = pct + '%';
-  document.getElementById('slider-label').textContent = `Item ${idx+1} of ${TKI_ITEMS.length}`;
-  document.getElementById('slider-pct').textContent   = pct + '%';
-
-  const prev = (S.instAnswers[idx] != null) ? S.instAnswers[idx].value : 50;
-  const styleA = CODE_MAP[item.a.code];
-  const styleB = CODE_MAP[item.b.code];
-
-  document.getElementById('slider-card').innerHTML = `
-    <div class="slider-options">
-      <div class="s-opt left">
-        <div class="s-opt-lbl">${styleA}</div>
-        ${item.a.text}
-      </div>
-      <div class="s-opt right">
-        <div class="s-opt-lbl">${styleB}</div>
-        ${item.b.text}
-      </div>
-    </div>
-    <div class="slider-wrap">
-      <input type="range" class="vslider" id="vslider-${idx}" min="0" max="100" value="${prev}"
-        oninput="sliderMove(this)" onchange="sliderMove(this)">
-    </div>
-    <div class="slider-labels">
-      <span>← More like me</span>
-      <span class="slider-center">Equal</span>
-      <span>More like me →</span>
-    </div>
-  `;
-
-  const sl = document.getElementById('vslider-' + idx);
-  sl.style.background = `linear-gradient(to right, var(--accent) ${prev}%, var(--surface-2) ${prev}%)`;
-
-  document.getElementById('slider-prev').style.display = idx > 0 ? '' : 'none';
-  S.instStart = Date.now();
-  updateProgress('slider');
+// ── SLIDER ────────────────────────────────────────────────────────────────────
+function slFreq(val, styleA, styleB) {
+  const v = Math.round(val / 5) * 5;
+  if (v === 50) return { text: 'About equal — 50% each', neutral: true };
+  if (v < 50)   return { text: `I'm more ${styleA} — ${100-v}% of the time`, neutral: false };
+  return           { text: `I'm more ${styleB} — ${v}% of the time`, neutral: false };
 }
-
-function sliderMove(el) {
-  const pct = el.value;
-  el.style.background = `linear-gradient(to right, var(--accent) ${pct}%, var(--surface-2) ${pct}%)`;
-  const rt = Date.now() - S.instStart;
-  if (!S.instAnswers[S.instIdx]) S.instAnswers[S.instIdx] = {};
-  S.instAnswers[S.instIdx] = { value: +pct, rt_ms: rt };
+function renderSl(i) {
+  const it=TKI[i],p=Math.round((i/TKI.length)*100),prev=(S.iA[i]!=null?S.iA[i].value:50);
+  document.getElementById('sl-fill').style.width=p+'%';
+  document.getElementById('sl-lbl').textContent=`Item ${i+1} of ${TKI.length}`;
+  document.getElementById('sl-pct').textContent=p+'%';
+  const sA=CM[it.a.c], sB=CM[it.b.c];
+  document.getElementById('sl-card').innerHTML=`
+    <div class="sl-opts">
+      <div class="sl-opt L"><div class="sl-tag">${sA}</div>${it.a.t}</div>
+      <div class="sl-opt R"><div class="sl-tag">${sB}</div>${it.b.t}</div>
+    </div>
+    <input type="range" class="vslider" id="vsl-${i}" min="0" max="100" step="5" value="${prev}" oninput="slMove(this,'${sA}','${sB}')" onchange="slMove(this,'${sA}','${sB}')">
+    <div class="sl-ends"><span>← ${sA}</span><span>${sB} →</span></div>
+    <div class="sl-freq${prev===50?' neutral':''}" id="sl-freq">${slFreq(prev,sA,sB).text}</div>`;
+  const el=document.getElementById('vsl-'+i);
+  el.style.background=`linear-gradient(to right, var(--accent) ${prev}%, var(--surface-2) ${prev}%)`;
+  document.getElementById('sl-prev').style.display=i>0?'':'none';
+  S.iT=Date.now(); updateRail('slider');
 }
-
-function sliderNext() {
-  // Always record current value (default 50 if untouched)
-  const sl = document.getElementById('vslider-' + S.instIdx);
-  if (sl && S.instAnswers[S.instIdx] == null) {
-    S.instAnswers[S.instIdx] = { value: +sl.value, rt_ms: Date.now() - S.instStart };
-  }
-  if (S.instIdx < TKI_ITEMS.length - 1) { S.instIdx++; renderSliderItem(S.instIdx); }
-  else scoreSlider();
+function slMove(el, sA, sB){
+  const p = Math.round(+el.value / 5) * 5;
+  el.value = p;
+  el.style.background=`linear-gradient(to right, var(--accent) ${p}%, var(--surface-2) ${p}%)`;
+  const f = slFreq(p, sA, sB);
+  const fd = document.getElementById('sl-freq');
+  if (fd) { fd.textContent = f.text; fd.className = 'sl-freq' + (f.neutral ? ' neutral' : ''); }
+  S.iA[S.iIdx]={value:p,rt_ms:Date.now()-S.iT};
 }
-function sliderPrev() { if (S.instIdx > 0) { S.instIdx--; renderSliderItem(S.instIdx); } }
-
-function scoreSlider() {
-  // Score: for each style, sum "contribution" from each item where they appeared.
-  // Value 0 = fully A, 100 = fully B. A score = (100 - value)/100, B score = value/100.
-  const totals = { As:0, Cp:0, Rv:0, Md:0, Fx:0 };
-  S.instAnswers.forEach((ans, i) => {
-    if (ans == null) return;
-    const item = TKI_ITEMS[i];
-    const v = ans.value / 100;
-    totals[item.a.code] += (1 - v);
-    totals[item.b.code] += v;
-  });
-  S.instScores = Object.entries(totals)
-    .map(([code, total]) => ({ style: CODE_MAP[code], code, total: +total.toFixed(2) }))
-    .sort((a,b) => b.total - a.total)
-    .map((s,i) => ({ ...s, rank: i+1 }));
+function slNext(){
+  const el=document.getElementById('vsl-'+S.iIdx);
+  if(el&&S.iA[S.iIdx]==null)S.iA[S.iIdx]={value:+el.value,rt_ms:Date.now()-S.iT};
+  if(S.iIdx<TKI.length-1){S.iIdx++;renderSl(S.iIdx);}else scoreSl();
+}
+function slPrev(){if(S.iIdx>0){S.iIdx--;renderSl(S.iIdx);}}
+function scoreSl(){
+  const tot={As:0,Cp:0,Rv:0,Md:0,Fx:0};
+  S.iA.forEach((a,i)=>{if(a==null)return;const it=TKI[i],v=a.value/100;tot[it.a.c]+=(1-v);tot[it.b.c]+=v;});
+  S.iScores=Object.entries(tot).map(([c,t])=>({style:CM[c],code:c,total:+t.toFixed(2)})).sort((a,b)=>b.total-a.total).map((s,i)=>({...s,rank:i+1}));
   completeSurvey();
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// SAVE & COMPLETE
-// ══════════════════════════════════════════════════════════════════════════════
-
+// ── SAVE ──────────────────────────────────────────────────────────────────────
 async function completeSurvey() {
-  goTo('saving');
-  await saveToSupabase();
+  showScreen('saving');
+  await save();
   showComplete();
 }
-
 function showComplete() {
   goTo('complete');
-  const code = S.completionCode || '(check Prolific)';
-  document.getElementById('display-code').textContent = code;
-
-  // Build Prolific redirect URL
-  const prolificUrl = `${window.CFG.prolificRedirect}?cc=${encodeURIComponent(S.completionCode || '')}`;
-  document.getElementById('prolific-link').href = prolificUrl;
+  document.getElementById('cc-val').textContent = S.cc || '(check Prolific)';
+  document.getElementById('prolific-link').href = `${window.CFG.prolificRedirect}?cc=${encodeURIComponent(S.cc||'')}`;
+}
+async function save() {
+  const {supabaseUrl:url,supabaseKey:key}=window.CFG;
+  const payload={session_id:S.sid,prolific_id:S.pid,completion_code:S.cc,study_id:S.study,instrument:S.inst,tki_answers:S.tkiA,instrument_answers:S.iA,tki_scores:S.tkiScores,instrument_scores:S.iScores,total_duration_ms:Date.now()-S.t0,completed_at:new Date().toISOString()};
+  try{localStorage.setItem('cf_'+S.sid,JSON.stringify(payload));}catch(e){}
+  if(!url||url==='YOUR_SUPABASE_URL'){console.warn('[Survey] Supabase not configured.');return;}
+  try{
+    const r=await fetch(`${url}/rest/v1/survey_responses`,{method:'POST',headers:{'Content-Type':'application/json','apikey':key,'Authorization':`Bearer ${key}`,'Prefer':'return=minimal'},body:JSON.stringify(payload)});
+    if(!r.ok)console.warn('[Survey] Save failed:',r.status);
+  }catch(e){console.warn('[Survey] Error:',e);}
+}
+async function saveBonus(d) {
+  const {supabaseUrl:url,supabaseKey:key}=window.CFG;
+  if(!url||url==='YOUR_SUPABASE_URL')return;
+  try{await fetch(`${url}/rest/v1/survey_responses?session_id=eq.${S.sid}`,{method:'PATCH',headers:{'Content-Type':'application/json','apikey':key,'Authorization':`Bearer ${key}`,'Prefer':'return=minimal'},body:JSON.stringify({bonus_engagement:d,bonus_completed_at:new Date().toISOString()})});}catch(e){}
 }
 
-async function saveToSupabase() {
-  const { supabaseUrl, supabaseKey } = window.CFG;
-  if (!supabaseUrl || supabaseUrl === 'YOUR_SUPABASE_URL') {
-    console.warn('[Survey] Supabase not configured — skipping remote save.');
-    saveLocal();
-    return;
-  }
-
-  const payload = {
-    session_id:         S.sessionId,
-    prolific_id:        S.prolificId,
-    completion_code:    S.completionCode,
-    study_id:           S.studyId,
-    instrument:         S.instrument,
-    tki_answers:        S.tkiAnswers,
-    instrument_answers: S.instAnswers,
-    tki_scores:         S.tkiScores,
-    instrument_scores:  S.instScores,
-    total_duration_ms:  Date.now() - S.surveyStart,
-    completed_at:       new Date().toISOString(),
-  };
-
-  // Local backup regardless
-  saveLocal(payload);
-
-  try {
-    const res = await fetch(`${supabaseUrl}/rest/v1/survey_responses`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': supabaseKey,
-        'Authorization': `Bearer ${supabaseKey}`,
-        'Prefer': 'return=minimal',
-      },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) console.warn('[Survey] Supabase save failed:', res.status, await res.text());
-  } catch (err) {
-    console.warn('[Survey] Supabase save error:', err);
-  }
-}
-
-async function saveBonusToSupabase(engData) {
-  const { supabaseUrl, supabaseKey } = window.CFG;
-  if (!supabaseUrl || supabaseUrl === 'YOUR_SUPABASE_URL') return;
-  try {
-    await fetch(`${supabaseUrl}/rest/v1/survey_responses?session_id=eq.${S.sessionId}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': supabaseKey,
-        'Authorization': `Bearer ${supabaseKey}`,
-        'Prefer': 'return=minimal',
-      },
-      body: JSON.stringify({ bonus_engagement: engData, bonus_completed_at: new Date().toISOString() }),
-    });
-  } catch(e) { console.warn('[Survey] Bonus save error:', e); }
-}
-
-function saveLocal(payload) {
-  try {
-    const key = 'survey_' + S.sessionId;
-    localStorage.setItem(key, JSON.stringify(payload || { session_id: S.sessionId, note: 'partial' }));
-  } catch(e) { /* storage unavailable */ }
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// RESULTS DISPLAY
-// ══════════════════════════════════════════════════════════════════════════════
-
-function goTo_results_override() {
-  // Called when user clicks "See My Profile"
-  renderResults();
-  goTo('results');
-}
-
-// Override the standard goTo for results to trigger render
-const _origGoTo = goTo;
-window.goTo = function(id) {
-  if (id === 'results') { renderResults(); }
-  _origGoTo(id);
-};
-
+// ── RESULTS ───────────────────────────────────────────────────────────────────
 function renderResults() {
-  // TKI bars
-  renderBars('tki-result-bars', S.tkiScores, 8);
-
-  // Top style card
-  const top = S.tkiScores[0];
-  const info = STYLE_INFO[top.style];
-  document.getElementById('tki-top-style-card').innerHTML = `
-    <div class="style-card">
-      <div class="style-card-rank">Primary Style</div>
-      <div class="style-card-name">${top.style}</div>
-      <div class="style-card-tag">${info.tagline}</div>
-      <div class="style-card-body">${info.body}</div>
-    </div>
-  `;
-
-  // Second style card if notable
-  const second = S.tkiScores[1];
-  if (second.count >= 3) {
-    const info2 = STYLE_INFO[second.style];
-    document.getElementById('tki-second-style-card').style.display = '';
-    document.getElementById('tki-second-style-card').innerHTML = `
-      <div class="style-card" style="border-left:3px solid var(--accent)">
-        <div class="style-card-rank">Secondary Style</div>
-        <div class="style-card-name">${second.style}</div>
-        <div class="style-card-tag">${info2.tagline}</div>
-        <div class="style-card-body">${info2.body}</div>
-      </div>
-    `;
-  }
-
-  // Instrument results
-  const nameMap = { ranking:'Style Ranking', pit:'The Pit', hybrid:'Hybrid Rating', slider:'Visual Slider' };
-  document.getElementById('instrument-name-display').textContent = nameMap[S.instrument] || S.instrument;
-
-  if (S.instScores) {
-    const maxVal = Math.max(...S.instScores.map(s => s.wins ?? s.total ?? s.avg ?? (6 - s.rank)));
-    renderBars('instrument-result-bars', S.instScores, maxVal);
-  }
+  bars('tki-bars',S.tkiScores,8);
+  const top=S.tkiScores[0],inf=SI[top.style];
+  document.getElementById('top-card').innerHTML=`<div class="sty-card"><div class="sty-rank">Primary Style</div><div class="sty-name">${top.style}</div><div class="sty-tag">${inf.tag}</div><div class="sty-body">${inf.body}</div></div>`;
+  const sec=S.tkiScores[1];
+  if(sec.count>=3){const i2=SI[sec.style];document.getElementById('second-card').style.display='';document.getElementById('second-card').innerHTML=`<div class="sty-card" style="border-left:3px solid var(--accent)"><div class="sty-rank">Secondary Style</div><div class="sty-name">${sec.style}</div><div class="sty-tag">${i2.tag}</div><div class="sty-body">${i2.body}</div></div>`;}
+  const nm={ranking:'Style Ranking',pit:'The Pit',hybrid:'Hybrid Rating',slider:'Visual Slider'};
+  document.getElementById('inst-name').textContent=nm[S.inst]||S.inst;
+  if(S.iScores){const mx=Math.max(...S.iScores.map(s=>s.wins??s.total??s.avg??(6-s.rank)));bars('inst-bars',S.iScores,mx);}
+}
+function bars(id,scores,mx) {
+  const el=document.getElementById(id); if(!el||!scores)return;
+  const gv=s=>s.win_rate??s.wins??s.total??s.avg??(6-(s.rank||5));
+  el.innerHTML=scores.map(s=>{const v=gv(s),p=mx>0?Math.round((v/mx)*100):0;return`<div class="r-row"><span class="r-rank">${s.rank}</span><span class="r-name">${s.style}</span><div class="r-bw"><div class="r-b" style="width:${p}%"></div></div><span class="r-val">${typeof v==='number'?(Number.isInteger(v)?v:v.toFixed(1)):v}</span></div>`;}).join('');
 }
 
-function renderBars(containerId, scores, maxVal) {
-  const el = document.getElementById(containerId);
-  if (!el || !scores) return;
-
-  const getVal = s => s.wins ?? s.total ?? s.avg ?? (6 - (s.rank||5));
-  const labels = { wins:'wins', total:'pts', avg:'avg', count:'items' };
-
-  el.innerHTML = scores.map(s => {
-    const val = getVal(s);
-    const pct = maxVal > 0 ? Math.round((val / maxVal) * 100) : 0;
-    return `
-      <div class="result-row">
-        <span class="r-rank">${s.rank}</span>
-        <span class="r-name">${s.style}</span>
-        <div class="r-bar-w"><div class="r-bar" style="width:${pct}%"></div></div>
-        <span class="r-val">${typeof val === 'number' ? (Number.isInteger(val) ? val : val.toFixed(1)) : val}</span>
-      </div>
-    `;
-  }).join('');
-
-  // Animate bars
-  setTimeout(() => {
-    el.querySelectorAll('.r-bar').forEach(b => b.style.width = b.style.width);
-  }, 50);
+// ── ENGAGEMENT ────────────────────────────────────────────────────────────────
+function buildEng() {
+  const c=document.getElementById('eng-items'); if(!c)return;
+  c.innerHTML=ENG_Q.map((q,i)=>`<div class="eng-item"><div class="eng-q">${i+1}. ${q.q}</div><div class="eng-row">${[1,2,3,4,5,6,7].map(v=>`<button class="eng-btn" id="e-${q.id}-${v}" onclick="engR('${q.id}',${v})">${v}</button>`).join('')}</div><div class="eng-ends"><span>${q.lo}</span><span>${q.hi}</span></div></div>`).join('');
+}
+function engR(id,v){S.engA[id]=v;[1,2,3,4,5,6,7].forEach(n=>{const b=document.getElementById(`e-${id}-${n}`);if(b)b.classList.toggle('on',n===v);});}
+async function submitEng(){
+  const d={...S.engA,open:document.getElementById('eng-open').value.trim(),at:new Date().toISOString()};
+  toast('Saving…'); await saveBonus(d); toastOff(); goTo('bonus-done');
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// ENGAGEMENT
-// ══════════════════════════════════════════════════════════════════════════════
-
-function buildEngagement() {
-  const container = document.getElementById('eng-items');
-  container.innerHTML = ENG_QUESTIONS.map((q, qi) => `
-    <div class="eng-item">
-      <div class="eng-q">${qi+1}. ${q.q}</div>
-      <div class="eng-scale">
-        ${[1,2,3,4,5,6,7].map(v=>`<button class="eng-btn" id="eng-${q.id}-${v}" onclick="engRate('${q.id}',${v})">${v}</button>`).join('')}
-      </div>
-      <div class="eng-anchors"><span>${q.lo}</span><span>${q.hi}</span></div>
-    </div>
-  `).join('');
-}
-
-function engRate(qid, val) {
-  S.engAnswers[qid] = val;
-  [1,2,3,4,5,6,7].forEach(v => {
-    const btn = document.getElementById(`eng-${qid}-${v}`);
-    if (btn) btn.classList.toggle('active', v === val);
-  });
-}
-
-async function submitEngagement() {
-  const engData = {
-    ...S.engAnswers,
-    open_text: document.getElementById('eng-open-text').value.trim(),
-    submitted_at: new Date().toISOString(),
-  };
-  showToast('Saving…');
-  await saveBonusToSupabase(engData);
-  hideToast();
-  goTo('bonus-done');
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// PDF DOWNLOAD
-// ══════════════════════════════════════════════════════════════════════════════
-
-function downloadPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit:'mm', format:'a4' });
-
-  const primary = S.tkiScores[0];
-  const info    = STYLE_INFO[primary.style];
-  const instName = { ranking:'Style Ranking', pit:'The Pit', hybrid:'Hybrid Rating', slider:'Visual Slider' }[S.instrument] || '';
-
-  // Header
-  doc.setFillColor(55, 110, 99);
-  doc.rect(0, 0, 210, 40, 'F');
-  doc.setTextColor(255);
-  doc.setFontSize(22);
-  doc.setFont('helvetica','bold');
-  doc.text('Conflict Style Profile', 20, 20);
-  doc.setFontSize(10);
-  doc.setFont('helvetica','normal');
-  doc.text(`Generated ${new Date().toLocaleDateString()}  ·  Study: ${S.studyId}`, 20, 30);
-
-  // Primary style
-  doc.setTextColor(40);
-  doc.setFontSize(14);
-  doc.setFont('helvetica','bold');
-  doc.text('Primary Style: ' + primary.style, 20, 55);
-  doc.setFontSize(10);
-  doc.setFont('helvetica','italic');
-  doc.setTextColor(80);
-  doc.text(info.tagline, 20, 63);
-  doc.setFont('helvetica','normal');
-  const bodyLines = doc.splitTextToSize(info.body, 170);
-  doc.text(bodyLines, 20, 71);
-
-  // TKI scores
-  let y = 95;
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(12);
-  doc.setTextColor(40);
-  doc.text('TKI Survey Scores', 20, y); y += 8;
-  S.tkiScores.forEach(s => {
-    doc.setFont('helvetica','normal');
-    doc.setFontSize(10);
-    doc.setTextColor(80);
-    doc.text(`${s.rank}. ${s.style}`, 22, y);
-    doc.setFillColor(55,110,99);
-    const bw = Math.round((s.count / 8) * 80);
-    doc.rect(80, y-4, bw, 4, 'F');
-    doc.setTextColor(120);
-    doc.text(`${s.count}/8`, 165, y);
-    y += 8;
-  });
-
-  // Instrument scores
-  y += 6;
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(12);
-  doc.setTextColor(40);
-  doc.text(`${instName} Scores`, 20, y); y += 8;
-  if (S.instScores) {
-    const maxV = Math.max(...S.instScores.map(s => s.wins ?? s.total ?? s.avg ?? (6-(s.rank||5))));
-    S.instScores.forEach(s => {
-      const val = s.wins ?? s.total ?? s.avg ?? (6-(s.rank||5));
-      doc.setFont('helvetica','normal');
-      doc.setFontSize(10);
-      doc.setTextColor(80);
-      doc.text(`${s.rank}. ${s.style}`, 22, y);
-      doc.setFillColor(176,106,40);
-      const bw = maxV > 0 ? Math.round((val / maxV) * 80) : 0;
-      doc.rect(80, y-4, bw, 4, 'F');
-      doc.setTextColor(120);
-      doc.text(typeof val === 'number' ? (Number.isInteger(val) ? String(val) : val.toFixed(1)) : String(val), 165, y);
-      y += 8;
-    });
-  }
-
-  // Footer
-  doc.setFontSize(8);
-  doc.setTextColor(160);
-  doc.text('conflict.scottmcluckie.com  ·  Research use only. Not a clinical assessment.', 20, 285);
-
+// ── PDF ───────────────────────────────────────────────────────────────────────
+function dlPDF(){
+  const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'});
+  const top=S.tkiScores[0],inf=SI[top.style],nm={ranking:'Style Ranking',pit:'The Pit',hybrid:'Hybrid Rating',slider:'Visual Slider'}[S.inst]||'';
+  doc.setFillColor(91,79,232);doc.rect(0,0,210,42,'F');
+  doc.setTextColor(255);doc.setFontSize(22);doc.setFont('helvetica','bold');doc.text('Conflict Style Profile',20,20);
+  doc.setFontSize(10);doc.setFont('helvetica','normal');doc.text(`Generated ${new Date().toLocaleDateString()}  ·  Study: ${S.study}`,20,32);
+  doc.setTextColor(40);doc.setFontSize(14);doc.setFont('helvetica','bold');doc.text('Primary Style: '+top.style,20,57);
+  doc.setFontSize(10);doc.setFont('helvetica','italic');doc.setTextColor(80);doc.text(inf.tag,20,65);
+  doc.setFont('helvetica','normal');doc.text(doc.splitTextToSize(inf.body,170),20,73);
+  let y=97;
+  doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(40);doc.text('TKI Survey Scores',20,y);y+=8;
+  S.tkiScores.forEach(s=>{doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(80);doc.text(`${s.rank}. ${s.style}`,22,y);doc.setFillColor(91,79,232);doc.rect(80,y-4,Math.round((s.count/8)*80),4,'F');doc.setTextColor(120);doc.text(`${s.count}/8`,165,y);y+=8;});
+  y+=6;doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(40);doc.text(`${nm} Scores`,20,y);y+=8;
+  if(S.iScores){const mx=Math.max(...S.iScores.map(s=>s.wins??s.total??s.avg??(6-(s.rank||5))));S.iScores.forEach(s=>{const v=s.wins??s.total??s.avg??(6-(s.rank||5));doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(80);doc.text(`${s.rank}. ${s.style}`,22,y);doc.setFillColor(194,105,10);doc.rect(80,y-4,mx>0?Math.round((v/mx)*80):0,4,'F');doc.setTextColor(120);doc.text(typeof v==='number'?(Number.isInteger(v)?String(v):v.toFixed(1)):String(v),165,y);y+=8;});}
+  doc.setFontSize(8);doc.setTextColor(160);doc.text('conflict.scottmcluckie.com  ·  Research use only. Not a clinical assessment.',20,285);
   doc.save('conflict-style-profile.pdf');
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// UTILITIES
-// ══════════════════════════════════════════════════════════════════════════════
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-}
-function hideToast() {
-  document.getElementById('toast').classList.remove('show');
-}
-
-// Build engagement questions on load
-document.addEventListener('DOMContentLoaded', buildEngagement);
-
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');}
+function toastOff(){document.getElementById('toast').classList.remove('show');}
 </script>
 </body>
 </html>
