@@ -313,10 +313,32 @@
 
     /* ══ STYLE CARD ══════════════════════════════════════════════════════════ */
     .sty-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 1.3rem; margin-bottom: 0.75rem; box-shadow: var(--shadow-sm); }
+    .sty-card.primary   { border-left: 4px solid var(--accent); }
+    .sty-card.secondary { border-left: 4px solid rgba(91,79,232,0.35); }
+    .sty-card.lower     { border-left: 4px solid var(--border); background: var(--surface-2); box-shadow: none; }
     .sty-rank { font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent); margin-bottom: 0.25rem; }
-    .sty-name { font-size: 1.15rem; font-weight: 800; margin-bottom: 0.35rem; letter-spacing: -0.015em; }
-    .sty-tag  { font-size: 0.83rem; color: var(--text-3); margin-bottom: 0.65rem; font-weight: 500; }
-    .sty-body { font-size: 0.87rem; color: var(--text-2); line-height: 1.68; }
+    .sty-card.lower .sty-rank { color: var(--text-3); }
+    .sty-name { font-size: 1.15rem; font-weight: 800; margin-bottom: 0.3rem; letter-spacing: -0.015em; }
+    .sty-card.lower .sty-name { font-size: 0.95rem; }
+    .sty-tag  { font-size: 0.83rem; color: var(--text-3); margin-bottom: 0.65rem; font-weight: 500; font-style: italic; }
+    .sty-body { font-size: 0.87rem; color: var(--text-2); line-height: 1.68; margin-bottom: 0.85rem; }
+    .sty-chips { display: flex; flex-direction: column; gap: 0.45rem; }
+    .sty-chip {
+      display: flex; gap: 0.6rem; align-items: flex-start;
+      font-size: 0.8rem; line-height: 1.5;
+    }
+    .chip-label {
+      font-size: 0.62rem; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.1em; white-space: nowrap; padding-top: 0.1rem;
+      min-width: 70px;
+    }
+    .chip-label.use   { color: var(--green); }
+    .chip-label.avoid { color: var(--amber); }
+    .chip-text { color: var(--text-2); }
+    .lower-group-label {
+      font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.12em; color: var(--text-3); margin: 1.5rem 0 0.75rem;
+    }
 
     /* ══ COMPLETION CODE ═════════════════════════════════════════════════════ */
     .cc-box { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); color: #fff; border-radius: var(--radius); padding: 2rem; text-align: center; margin-bottom: 1.5rem; box-shadow: 0 4px 24px rgba(91,79,232,0.42); }
@@ -392,23 +414,21 @@
 
 <!-- ═══════════════════════ SPLASH ═══════════════════════════════════════════ -->
 <div class="screen active" id="screen-splash">
-  <span class="eyebrow">Conflict Style Research · University Study</span>
-  <h1>How do you handle conflict?</h1>
-  <p>We're collecting data to study how people navigate disagreement — and to compare different ways of measuring it. This research helps improve the tools practitioners and organizations use when working with teams.</p>
-  <p>This study has <strong>two paid parts</strong> that take about <strong>12–18 minutes</strong> total. After completing them you'll receive a completion code to submit on Prolific.</p>
-  <p>As a bonus you'll have the option to view your personal conflict style profile and answer a few optional questions. That part is unpaid and completely voluntary.</p>
-  <div class="info"><strong>What to expect:</strong> A 20-item survey about how you approach conflict, followed by a second short assessment in a different format. There are no right or wrong answers — we're interested in your genuine tendencies.</div>
+  <h1>Welcome to our study!</h1>
+  <p>You will be presented with 35 multiple choice questions on how you prefer to deal with conflict, disagreement, and negotiation strategies. When answering, please think about how you typically deal with these kinds of situations and answer as honestly as you can. Many questions will look the same, but that is by design. This will take about 8 minutes to complete.</p>
+  <p><strong>This is not a test, there are no right answers.</strong></p>
+  <p>Your answers are completely anonymous beyond the collection of your Prolific ID for payment verification purposes. Your participation is voluntary, but you must complete every question in order to receive payment.</p>
+  <p>We greatly appreciate your participation, and if you are interested, you are able to view the results of your own profile at the very end! We only ask that you go back and enter the Prolific Completion Code before viewing, so we can have an accurate time estimate.</p>
   <div class="btn-row">
     <button class="btn btn-primary btn-lg" onclick="goTo('prolific')">Begin →</button>
   </div>
-  <p style="font-size:0.74rem;color:var(--text-3);margin-top:1.25rem">By continuing you consent to your anonymized responses being used for research. Your Prolific ID is stored only for payment purposes.</p>
 </div>
 
 <!-- ═══════════════════════ PROLIFIC ID ══════════════════════════════════════ -->
 <div class="screen" id="screen-prolific">
   <span class="eyebrow">Step 1 of 2</span>
   <h2>Confirm your Prolific ID</h2>
-  <p>Your ID is used only to process your payment and is never linked to your responses in any published research.</p>
+  <p>Your ID is only used to confirm and process your payment and is deleted upon study completion.</p>
   <div id="pid-auto" style="display:none">
     <p style="font-size:0.84rem;color:var(--text-3);margin-bottom:0.35rem">We detected your Prolific ID:</p>
     <div class="pid-chip" id="pid-chip"></div>
@@ -546,16 +566,8 @@
 <div class="screen" id="screen-results">
   <span class="eyebrow">Your Profile · Bonus</span>
   <h2>Your Conflict Style Profile</h2>
-  <p style="font-size:0.87rem">Based on your TKI survey responses.</p>
-  <div id="tki-bars" style="margin-bottom:2rem"></div>
-  <hr>
-  <h3 style="margin-bottom:1rem">What your top style means</h3>
-  <div id="top-card"></div>
-  <div id="second-card" style="display:none"></div>
-  <hr>
-  <h3 style="margin-bottom:0.5rem">Your second assessment: <span id="inst-name"></span></h3>
-  <p style="font-size:0.84rem">How the second format ranked your styles:</p>
-  <div id="inst-bars"></div>
+  <p style="font-size:0.87rem;margin-bottom:1.5rem">Based on your survey responses. Your dominant styles are shown first.</p>
+  <div id="results-cards"></div>
   <div class="btn-row end" style="margin-top:2rem">
     <button class="btn btn-primary" onclick="goTo('engagement')" style="background:var(--amber);box-shadow:0 2px 14px rgba(194,105,10,0.38)">Continue to Questions →</button>
   </div>
@@ -697,11 +709,46 @@ const TKI = [
 ];
 const CM = { As:'Competing', Cp:'Collaborating', Rv:'Avoiding', Md:'Compromising', Fx:'Accommodating' };
 const SI = {
-  Competing:     { tag:'You assert your position and push for what you believe is right.', body:'You\'re comfortable advocating firmly in conflict. When something matters to you, you make sure it gets heard — even if it creates friction. You tend to influence outcomes rather than defer.' },
-  Collaborating: { tag:'You dig into disagreements to find solutions that genuinely work for everyone.', body:'You invest time understanding all sides and building outcomes that address everyone\'s real concerns. You\'re willing to stay in the discomfort of a conflict until it\'s actually resolved.' },
-  Compromising:  { tag:'You find fair middle-ground that lets everyone move forward.', body:'You\'re pragmatic — willing to give a little to get a little. You help groups reach workable agreements without waiting for a perfect solution.' },
-  Avoiding:      { tag:'You step back from conflicts, engaging selectively.', body:'You\'re thoughtful about which battles are worth fighting. You often let tensions cool before weighing in, or redirect energy when conflict seems unproductive.' },
-  Accommodating: { tag:'You put the relationship first, giving ground to preserve harmony.', body:'You\'re flexible and low-ego in conflict — often willing to defer to preserve goodwill. You value the relationship over winning.' },
+  Competing: {
+    tag:    'You assert your position and push for what you believe is right.',
+    body:   'When something matters to you, you make sure it gets heard — even if it creates friction. You tend to advocate firmly and influence outcomes rather than defer. Others likely experience you as direct and confident, sometimes to the point of intensity.',
+    use:    'Best when quick decisions are needed, when you have clear expertise, or when protecting something genuinely important from being compromised away.',
+    avoid:  'Less effective when relationship preservation matters most, or when the other person has information or perspective you haven\'t fully heard yet.',
+    neutral_tag:  'This style asserts positions and pushes for a particular outcome.',
+    neutral_body: 'People who lead with Competing advocate firmly and prioritize getting the right result over preserving harmony. It works well under time pressure or when expertise is clear, but can damage trust if overused.',
+  },
+  Collaborating: {
+    tag:    'You dig into disagreements to find solutions that genuinely work for everyone.',
+    body:   'You invest real time understanding all sides before proposing anything. You\'re willing to stay in the discomfort of an unresolved conflict because you believe the effort produces better outcomes. People likely see you as thorough, invested, and genuinely curious about their perspective.',
+    use:    'Best when the issue is complex, the relationship is long-term, or when a creative solution is possible that satisfies everyone\'s real needs.',
+    avoid:  'Less effective under tight time pressure, or when one party has already made a final decision and engagement would be misleading.',
+    neutral_tag:  'This style seeks solutions that work for everyone involved.',
+    neutral_body: 'Collaborating takes time and requires genuine openness on both sides. It produces durable agreements when conditions are right, but can feel exhausting or impractical in situations requiring fast resolution.',
+  },
+  Compromising: {
+    tag:    'You find fair middle-ground that lets everyone move forward.',
+    body:   'You\'re pragmatic — willing to give a little to get a little. You have a natural sense of fairness and tend to move groups toward workable agreements without waiting for perfect ones. You\'re good at defusing standoffs.',
+    use:    'Best when both parties have equal standing, when a good-enough solution is better than prolonged negotiation, or as a fallback when collaboration isn\'t possible.',
+    avoid:  'Less effective when one party is clearly right and compromise would mean giving up something important, or when the issue requires a fully committed solution.',
+    neutral_tag:  'This style finds a fair middle ground, giving and taking in equal measure.',
+    neutral_body: 'Compromising is efficient and feels equitable, but it can leave both sides partially dissatisfied. It works best as a bridge, not a default — overuse can signal a lack of conviction.',
+  },
+  Avoiding: {
+    tag:    'You step back from conflicts, engaging selectively.',
+    body:   'You\'re thoughtful about which battles are worth fighting. You often let tensions cool before weighing in, and you\'re comfortable letting things go when the cost of engagement outweighs the benefit. This can look like patience or like disengagement, depending on context.',
+    use:    'Best when emotions are running high and space is needed, when the issue is genuinely low-stakes, or when you need more information before taking a position.',
+    avoid:  'Less effective when avoidance lets problems compound, when others interpret silence as agreement, or when an issue needs to be resolved rather than just tolerated.',
+    neutral_tag:  'This style withdraws from conflict, letting things resolve on their own.',
+    neutral_body: 'Avoiding conserves energy and can de-escalate tension, but it leaves issues unresolved. It\'s strategic when used deliberately, and costly when it becomes a default response to discomfort.',
+  },
+  Accommodating: {
+    tag:    'You put the relationship first, giving ground to preserve harmony.',
+    body:   'You\'re flexible and genuinely low-ego in conflict — often willing to defer when the relationship matters more than the outcome. Others likely experience you as easy to work with and emotionally attuned. You tend to absorb friction rather than create it.',
+    use:    'Best when preserving the relationship is the priority, when you realize you\'re wrong, or when the issue matters more to the other person than it does to you.',
+    avoid:  'Less effective when you consistently give ground on things that matter to you — over time this can build resentment, or signal to others that your positions aren\'t worth taking seriously.',
+    neutral_tag:  'This style prioritizes the relationship, yielding to the other person\'s position.',
+    neutral_body: 'Accommodating maintains harmony and goodwill, and it\'s genuinely generous when used with intention. Overuse can erode credibility and leave important concerns unaddressed.',
+  },
 };
 const PIT_CARDS = {
   As: [
@@ -1146,14 +1193,70 @@ async function saveBonus(d) {
 
 // ── RESULTS ───────────────────────────────────────────────────────────────────
 function renderResults() {
-  bars('tki-bars',S.tkiScores,8);
-  const top=S.tkiScores[0],inf=SI[top.style];
-  document.getElementById('top-card').innerHTML=`<div class="sty-card"><div class="sty-rank">Primary Style</div><div class="sty-name">${top.style}</div><div class="sty-tag">${inf.tag}</div><div class="sty-body">${inf.body}</div></div>`;
-  const sec=S.tkiScores[1];
-  if(sec.count>=3){const i2=SI[sec.style];document.getElementById('second-card').style.display='';document.getElementById('second-card').innerHTML=`<div class="sty-card" style="border-left:3px solid var(--accent)"><div class="sty-rank">Secondary Style</div><div class="sty-name">${sec.style}</div><div class="sty-tag">${i2.tag}</div><div class="sty-body">${i2.body}</div></div>`;}
-  const nm={ranking:'Style Ranking',pit:'The Pit',hybrid:'Hybrid Rating',slider:'Visual Slider'};
-  document.getElementById('inst-name').textContent=nm[S.inst]||S.inst;
-  if(S.iScores){const mx=Math.max(...S.iScores.map(s=>s.wins??s.total??s.avg??(6-s.rank)));bars('inst-bars',S.iScores,mx);}
+  const scores = S.tkiScores; // already sorted rank 1–5
+  const container = document.getElementById('results-cards');
+  if (!scores || !container) return;
+
+  let html = '';
+
+  scores.forEach((s, i) => {
+    const inf  = SI[s.style];
+    const rank = s.rank;
+
+    if (rank === 1) {
+      // Primary — full "you" framing
+      html += `
+        <div class="sty-card primary">
+          <div class="sty-rank">Primary Style · ${s.count}/8</div>
+          <div class="sty-name">${s.style}</div>
+          <div class="sty-tag">${inf.tag}</div>
+          <div class="sty-body">${inf.body}</div>
+          <div class="sty-chips">
+            <div class="sty-chip"><span class="chip-label use">Use when</span><span class="chip-text">${inf.use}</span></div>
+            <div class="sty-chip"><span class="chip-label avoid">Go easy</span><span class="chip-text">${inf.avoid}</span></div>
+          </div>
+        </div>`;
+    } else if (rank === 2 && s.count >= 3) {
+      // Secondary — "you" framing, slightly smaller
+      html += `
+        <div class="sty-card secondary">
+          <div class="sty-rank">Secondary Style · ${s.count}/8</div>
+          <div class="sty-name">${s.style}</div>
+          <div class="sty-tag">${inf.tag}</div>
+          <div class="sty-body">${inf.body}</div>
+          <div class="sty-chips">
+            <div class="sty-chip"><span class="chip-label use">Use when</span><span class="chip-text">${inf.use}</span></div>
+            <div class="sty-chip"><span class="chip-label avoid">Go easy</span><span class="chip-text">${inf.avoid}</span></div>
+          </div>
+        </div>`;
+    } else if (rank === 2) {
+      // Second place but low count — neutral framing
+      if (!html.includes('lower-group-label')) {
+        html += `<div class="lower-group-label">Less dominant styles in your profile</div>`;
+      }
+      html += `
+        <div class="sty-card lower">
+          <div class="sty-rank">Rank ${rank} · ${s.count}/8</div>
+          <div class="sty-name">${s.style}</div>
+          <div class="sty-tag">${inf.neutral_tag}</div>
+          <div class="sty-body">${inf.neutral_body}</div>
+        </div>`;
+    } else {
+      // Ranks 3–5 — neutral framing, grouped
+      if (rank === 3) {
+        html += `<div class="lower-group-label">Less dominant styles in your profile</div>`;
+      }
+      html += `
+        <div class="sty-card lower">
+          <div class="sty-rank">Rank ${rank} · ${s.count}/8</div>
+          <div class="sty-name">${s.style}</div>
+          <div class="sty-tag">${inf.neutral_tag}</div>
+          <div class="sty-body">${inf.neutral_body}</div>
+        </div>`;
+    }
+  });
+
+  container.innerHTML = html;
 }
 function bars(id,scores,mx) {
   const el=document.getElementById(id); if(!el||!scores)return;
