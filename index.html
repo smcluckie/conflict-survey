@@ -314,7 +314,6 @@
     .sty-card.lower .sty-name { font-size: 0.95rem; }
     .sty-tag  { font-size: 0.83rem; color: var(--text-3); margin-bottom: 0.65rem; font-weight: 500; font-style: italic; }
     .sty-body { font-size: 0.87rem; color: var(--text-2); line-height: 1.68; margin-bottom: 0.85rem; }
-    .sty-tip  { font-size: 0.82rem; color: var(--text-3); line-height: 1.6; border-top: 1px solid var(--border); padding-top: 0.65rem; margin-top: 0.1rem; }
     .sty-chips { display: flex; flex-direction: column; gap: 0.45rem; }
     .sty-chip {
       display: flex; gap: 0.6rem; align-items: flex-start;
@@ -327,6 +326,7 @@
     }
     .chip-label.use   { color: var(--green); }
     .chip-label.avoid { color: var(--amber); }
+    .chip-label.tip   { color: var(--accent); }
     .chip-text { color: var(--text-2); }
     .lower-group-label {
       font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
@@ -577,7 +577,8 @@
   <h2>Your Conflict Style Profile</h2>
   <p style="font-size:0.87rem;margin-bottom:1.5rem">Based on your survey responses. Your dominant styles are shown first.</p>
   <div id="results-cards"></div>
-  <div class="btn-row end" style="margin-top:2rem">
+  <div class="btn-row apart" style="margin-top:2rem">
+    <button class="btn btn-ghost" onclick="dlPDF()">⬇ Download PDF</button>
     <button class="btn btn-primary" onclick="goTo('engagement')" style="background:var(--amber);box-shadow:0 2px 14px rgba(194,105,10,0.38)">Optional Feedback →</button>
   </div>
 </div>
@@ -719,50 +720,50 @@ const TKI = [
 ];
 const CM = { As:'Competing', Cp:'Collaborating', Rv:'Avoiding', Md:'Compromising', Fx:'Accommodating' };
 const SI = {
+  Collaborating: {
+    tag:          'You work through conflict to find solutions that work for everyone.',
+    body:         'You don\'t rush past disagreement — you slow things down and try to understand what\'s really going on for each person. You ask questions, connect the dots, and look for a solution that feels right to everyone involved. Even when it gets uncomfortable, you stay in it because you believe that working through it leads to better outcomes. People likely see you as thoughtful, engaged, and genuinely interested in their perspective.',
+    use:          'Best when the issue is complex, when the relationship matters long term, or when there is room to find a solution that meets everyone\'s deeper needs. For example, the same issue keeps coming up, expectations feel unclear, or you both care about the outcome but see it differently.',
+    avoid:        'Less effective when time is tight, when others are not open to a deeper conversation, or when a decision has already been made. In those cases, pushing for full alignment can slow things down or create frustration.',
+    neutral_tag:  'Working through conflict to find solutions that work for everyone.',
+    neutral_body: 'This style is about taking time to understand different perspectives and working together to find a solution that meets everyone\'s needs. It takes time and requires genuine openness on both sides, but when used well it can lead to stronger relationships and more sustainable outcomes.',
+    tip:          'If this is less natural for you, try using it in one or two key moments instead of all the time. When something feels important or keeps coming up, pause and ask a few extra questions to understand the other person\'s perspective before jumping to a solution.',
+  },
   Competing: {
-    tag:    'You take a clear position and move things forward.',
-    body:   'You tend to take a direct approach when conflict shows up. You\'re comfortable stating your position, making decisions, and moving things forward without a lot of back and forth. When something matters to you, you don\'t hesitate to advocate for it. Others likely see you as decisive, confident, and willing to take charge, especially when things feel uncertain or stuck.',
-    use:    'Best when a quick decision is needed, when the stakes are high, or when holding a clear line matters. For example, an important decision getting delayed or needing to be addressed right away, situations where no one else is stepping up, or moments where you just have to say no.',
-    avoid:  'Less effective when the relationship needs more care, when others want to be heard before moving forward, or when pushing too hard could create resistance. In those moments, slowing down and considering others more can lead to better long term outcomes.',
+    tag:          'You take a clear position and move things forward.',
+    body:         'You tend to take a direct approach when conflict shows up. You\'re comfortable stating your position, making decisions, and moving things forward without a lot of back and forth. When something matters to you, you don\'t hesitate to advocate for it. Others likely see you as decisive, confident, and willing to take charge — especially when things feel uncertain or stuck.',
+    use:          'Best when a quick decision is needed, when the stakes are high, or when holding a clear line matters. For example, an important decision getting delayed, situations where no one else is stepping up, or moments where you just have to say no.',
+    avoid:        'Less effective when the relationship needs more care, when others want to be heard before moving forward, or when pushing too hard could create resistance. In those moments, slowing down and considering others more can lead to better long-term outcomes.',
     neutral_tag:  'Taking a clear position and moving things forward.',
     neutral_body: 'This style is about being direct, stating what you want, and making decisions without a lot of back and forth. It can feel uncomfortable if you prefer to keep things smooth or collaborative, but there are moments where this kind of clarity is exactly what\'s needed.',
-    neutral_tip:  'For example, clearly state your preference instead of going along with the group, or make a small decision without overexplaining. You don\'t need to push hard, just practice being a bit more direct and comfortable taking a stand.',
-  },
-  Collaborating: {
-    tag:    'You work through conflict to find solutions that work for everyone.',
-    body:   'You don\'t rush past disagreement, you slow things down and try to understand what\'s really going on for each person. You ask questions, connect the dots, and look for a solution that feels right to everyone involved. Even when it gets uncomfortable, you stay in it because you believe that working through it leads to better outcomes. People likely see you as thoughtful, engaged, and genuinely interested in their perspective.',
-    use:    'Best when the issue is complex, when the relationship matters long term, or when there is room to find a solution that meets everyone\'s deeper needs. For example, the same issue keeps coming up, expectations feel unclear, or you both care about the outcome but see it differently, like figuring out shared responsibilities at home or in close relationships.',
-    avoid:  'Less effective when time is tight, when others are not open to a deeper conversation, or when a decision has already been made. In those cases, pushing for full alignment can slow things down or create frustration.',
-    neutral_tag:  'Working through conflict to find solutions that work for everyone.',
-    neutral_body: 'This style is about taking time to understand different perspectives and working together to find a solution that meets everyone\'s needs. Collaborating takes time and requires genuine openness on both sides, but when used well, it can lead to stronger relationships and more sustainable outcomes.',
-    neutral_tip:  'If this is less natural for you, try using it in one or two key moments instead of all the time. For example, when something feels important or keeps coming up, pause and ask a few extra questions to understand the other person\'s perspective before jumping to a solution.',
-  },
-  Compromising: {
-    tag:    'You seek common ground to reach a practical outcome.',
-    body:   'You tend to focus on finding a solution that works well enough for everyone. Instead of pushing for a perfect outcome, you look for a practical way to meet in the middle and move on. You\'re comfortable making tradeoffs and expect others to do the same. Often, that means settling for closer to 70% to 80% of what everyone wants instead of 100%. Others likely see you as fair, reasonable, and focused on resolution.',
-    use:    'Best when time is limited, when both sides have valid points, or when a quick, workable solution is more important than a perfect one. For example, getting stuck in a back and forth without much progress, or suggesting a third option that bridges the gap between two differing perspectives.',
-    avoid:  'Less effective when a deeper solution is possible, when one side is giving up more than the other, or when the issue really matters and a quick fix won\'t hold. In those moments, slowing down or taking a clearer stance can lead to better outcomes.',
-    neutral_tag:  'Finding common ground to reach a practical outcome.',
-    neutral_body: 'This style is about making tradeoffs and finding a solution that works well enough for everyone. It can be a fast and practical way to resolve conflict, but if overused, it can lead to solutions that don\'t fully satisfy either side.',
-    neutral_tip:  'If this is less natural for you, try it when things feel stuck. For example, offer a middle option or suggest splitting the difference instead of pushing for your ideal outcome. You don\'t have to give up something major, just practice finding solutions that are good enough for now.',
+    tip:          'If this feels uncomfortable, start small. Try stating your preference clearly instead of just going along with the group, or make a small decision without overexplaining. You don\'t need to push hard — just focus on being a bit more direct and comfortable taking a stand.',
   },
   Avoiding: {
-    tag:    'You strategically choose when to step back and when to engage.',
-    body:   'You don\'t feel the need to jump into every disagreement. When tension shows up, you\'re comfortable pausing, creating distance, or letting things settle before engaging. Sometimes that means choosing not to address something right away, especially if it feels minor or likely to resolve on its own. Others likely see you as calm, steady, and not easily pulled into unnecessary conflict.',
-    use:    'Best when the issue is minor, when emotions are running high, or when stepping away can prevent things from escalating. For example, a conversation becoming unproductive, like devolving into personal attacks, needing time to think before responding, or deciding it\'s not worth your time and effort.',
-    avoid:  'Less effective when the issue keeps coming back, when something important goes unaddressed, or when others are waiting for clarity. In those moments, staying quiet can lead to frustration or confusion over time.',
+    tag:          'You strategically choose when to step back and when to engage.',
+    body:         'You don\'t feel the need to jump into every disagreement. When tension shows up, you\'re comfortable pausing, creating distance, or letting things settle before engaging. Sometimes that means choosing not to address something right away, especially if it feels minor or likely to resolve on its own. Others likely see you as calm, steady, and not easily pulled into unnecessary conflict.',
+    use:          'Best when the issue is minor, when emotions are running high, or when stepping away can prevent things from escalating. For example, a conversation becoming unproductive, needing time to think before responding, or deciding something isn\'t worth your time and effort.',
+    avoid:        'Less effective when the issue keeps coming back, when something important goes unaddressed, or when others are waiting for clarity. In those moments, staying quiet can lead to frustration or confusion over time.',
     neutral_tag:  'Strategically choosing when to step back and when to engage.',
-    neutral_body: 'This style is about pausing, creating distance, or choosing not to engage right away. It can be useful for keeping things from escalating or giving yourself time to think, but if overused, it can leave important things unresolved.',
-    neutral_tip:  'If this is less natural for you, try using it to create a pause instead of pushing through right away. For example, take a break during a tense conversation or give yourself time to think before responding. You don\'t have to avoid the issue completely, just create a little space before coming back to it.',
+    neutral_body: 'This style is about pausing, creating distance, or choosing not to engage right away. It can be useful for keeping things from escalating or giving yourself time to think, but if overused it can leave important things unresolved.',
+    tip:          'If you\'re struggling to let things go, try taking a short break during a tense conversation or give yourself time to think before responding. You don\'t have to avoid the issue completely — just create a little space before coming back to it.',
   },
   Accommodating: {
-    tag:    'You prioritize the relationship and keep things moving smoothly.',
-    body:   'You tend to focus on maintaining harmony when conflict comes up. You\'re willing to adjust, give a little, or go along with others to keep things positive and avoid unnecessary tension. When something doesn\'t feel critical to you, you\'re comfortable letting it go for the sake of the relationship. Others likely see you as easy to work with, supportive, and considerate of how things impact them.',
-    use:    'Best when the relationship matters more than the specific outcome, when the issue is low stakes for you, or when keeping things smooth is the priority. For example, not having a strong preference or being flexible on plans, choosing to support the other person, or continuing the conversation and letting something go because it matters more to them.',
-    avoid:  'Less effective when your needs or preferences keep getting pushed aside, when something important to you isn\'t being addressed, or when others start to expect you\'ll always go along. In those moments, speaking up can lead to more balanced outcomes.',
+    tag:          'You prioritize the relationship and keep things moving smoothly.',
+    body:         'You tend to focus on maintaining harmony when conflict comes up. You\'re willing to adjust, give a little, or go along with others to keep things positive and avoid unnecessary tension. When something doesn\'t feel critical to you, you\'re comfortable letting it go for the sake of the relationship. Others likely see you as easy to work with, supportive, and considerate of how things impact them.',
+    use:          'Best when the relationship matters more than the specific outcome, when the issue is low stakes for you, or when keeping things smooth is the priority. For example, not having a strong preference, choosing to support the other person, or letting something go because it matters more to them.',
+    avoid:        'Less effective when your needs or preferences keep getting pushed aside, when something important to you isn\'t being addressed, or when others start to expect you\'ll always go along. In those moments, speaking up can lead to more balanced outcomes.',
     neutral_tag:  'Prioritizing the relationship and keeping things moving smoothly.',
-    neutral_body: 'This style is about focusing on the relationship, being flexible, and sometimes putting others\' needs ahead of your own. It can help maintain trust and keep interactions positive, but if overused, it can lead to your own preferences being overlooked.',
-    neutral_tip:  'If this is less natural for you, try it in small, low-stakes situations. For example, go along with someone else\'s plan without needing to adjust it, or let a minor issue go instead of addressing it. You don\'t have to give up something important, just practice being a bit more flexible when it doesn\'t cost you much.',
+    neutral_body: 'This style is about being flexible and sometimes putting others\' needs ahead of your own. It can help maintain trust and keep interactions positive, but if overused it can lead to your own preferences being overlooked.',
+    tip:          'If this is a challenge for you, try it in small, low-stakes situations. Let someone else make a decision and just focus on supporting them. You don\'t have to give up something important — just practice being a bit more flexible when it doesn\'t cost you much.',
+  },
+  Compromising: {
+    tag:          'You seek common ground to reach a practical outcome.',
+    body:         'You tend to focus on finding a solution that works well enough for everyone. Instead of pushing for a perfect outcome, you look for a practical way to meet in the middle and move on. You\'re comfortable making tradeoffs and expect others to do the same — often settling for closer to 70–80% of what everyone wants instead of 100%. Others likely see you as fair, reasonable, and focused on resolution.',
+    use:          'Best when time is limited, when both sides have valid points, or when a quick workable solution is more important than a perfect one. For example, getting stuck in back and forth without much progress, or suggesting a third option that bridges the gap between two perspectives.',
+    avoid:        'Less effective when a deeper solution is possible, when one side is giving up more than the other, or when the issue really matters and a quick fix won\'t hold. In those moments, slowing down or taking a clearer stance can lead to better outcomes.',
+    neutral_tag:  'Finding common ground to reach a practical outcome.',
+    neutral_body: 'This style is about making tradeoffs and finding a solution that works well enough for everyone. It can be a fast and practical way to resolve conflict, but if overused it can lead to solutions that don\'t fully satisfy either side.',
+    tip:          'If this feels unnatural, try it when things feel stuck. Offer a middle option or suggest splitting the difference instead of pushing for your ideal outcome. You don\'t have to give up something major — just practice finding solutions that are good enough for now.',
   },
 };
 const PIT_CARDS = {
@@ -1341,7 +1342,7 @@ function renderResults() {
           </div>
         </div>`;
     } else if (rank === 2) {
-      // Second place but low count — neutral framing
+      // Second place but low count — neutral framing + tip
       if (!html.includes('lower-group-label')) {
         html += `<div class="lower-group-label">Less dominant styles in your profile</div>`;
       }
@@ -1351,10 +1352,12 @@ function renderResults() {
           <div class="sty-name">${s.style}</div>
           <div class="sty-tag">${inf.neutral_tag}</div>
           <div class="sty-body">${inf.neutral_body}</div>
-          ${inf.neutral_tip ? `<div class="sty-tip">${inf.neutral_tip}</div>` : ''}
+          <div class="sty-chips" style="margin-top:0.75rem">
+            <div class="sty-chip"><span class="chip-label tip">Try this</span><span class="chip-text">${inf.tip}</span></div>
+          </div>
         </div>`;
     } else {
-      // Ranks 3–5 — neutral framing, grouped
+      // Ranks 3–5 — neutral framing + tip, grouped
       if (rank === 3) {
         html += `<div class="lower-group-label">Less dominant styles in your profile</div>`;
       }
@@ -1364,7 +1367,9 @@ function renderResults() {
           <div class="sty-name">${s.style}</div>
           <div class="sty-tag">${inf.neutral_tag}</div>
           <div class="sty-body">${inf.neutral_body}</div>
-          ${inf.neutral_tip ? `<div class="sty-tip">${inf.neutral_tip}</div>` : ''}
+          <div class="sty-chips" style="margin-top:0.75rem">
+            <div class="sty-chip"><span class="chip-label tip">Try this</span><span class="chip-text">${inf.tip}</span></div>
+          </div>
         </div>`;
     }
   });
@@ -1393,8 +1398,6 @@ function dlPDF(){
   const {jsPDF} = window.jspdf;
   const doc = new jsPDF({ unit:'mm', format:'a4' });
   const scores = S.tkiScores;
-  const primary = scores[0];
-  const inf = SI[primary.style];
 
   // ── Header bar ──────────────────────────────────────────────────────────────
   doc.setFillColor(91, 79, 232);
@@ -1407,102 +1410,128 @@ function dlPDF(){
 
   let y = 50;
 
-  // ── All 5 styles ────────────────────────────────────────────────────────────
-  scores.forEach((s, i) => {
-    const si      = SI[s.style];
+  scores.forEach((s) => {
+    const si          = SI[s.style];
     const isPrimary   = s.rank === 1;
     const isSecondary = s.rank === 2 && s.count >= 3;
     const isLower     = !isPrimary && !isSecondary;
 
-    // Check if we need a new page
-    const blockHeight = isLower ? 22 : 42;
-    if (y + blockHeight > 270) {
-      doc.addPage();
-      y = 20;
-    }
-
-    // Section divider for lower group
+    // Section divider before lower group
     if (s.rank === 3) {
-      y += 3;
+      if (y + 12 > 270) { doc.addPage(); y = 20; }
+      y += 4;
       doc.setDrawColor(220, 218, 230);
       doc.line(20, y, 190, y);
       y += 5;
       doc.setFontSize(7.5); doc.setFont('helvetica','bold');
       doc.setTextColor(142, 138, 174);
       doc.text('LESS DOMINANT STYLES IN YOUR PROFILE', 20, y);
-      y += 6;
+      y += 7;
     }
 
     if (isLower) {
-      // Compact row for lower styles
-      doc.setFontSize(9); doc.setFont('helvetica','bold');
-      doc.setTextColor(isPrimary ? 91 : isSecondary ? 91 : 100);
-      doc.text(`${s.rank}. ${s.style}`, 20, y);
-      doc.setFontSize(8); doc.setFont('helvetica','normal');
-      doc.setTextColor(130);
-      doc.text(`${s.count}/8 selections`, 60, y);
-      y += 5;
+      // Compact card — neutral tag, body, tip
+      const neutralTagLines  = doc.splitTextToSize(si.neutral_tag, 165);
+      const neutralBodyLines = doc.splitTextToSize(si.neutral_body, 165);
+      const tipLines         = doc.splitTextToSize(si.tip, 155);
+      const blockH = 8 + neutralTagLines.length*4 + neutralBodyLines.length*4 + tipLines.length*4 + 12;
+
+      if (y + blockH > 278) { doc.addPage(); y = 20; }
+
+      // Left bar
+      doc.setFillColor(200, 198, 220);
+      doc.rect(20, y - 1, 2.5, blockH - 2, 'F');
+
+      // Rank label
+      doc.setFontSize(7); doc.setFont('helvetica','bold');
+      doc.setTextColor(142, 138, 174);
+      doc.text(`RANK ${s.rank} · ${s.count}/8`, 26, y + 3);
+
+      // Style name
+      doc.setFontSize(11); doc.setFont('helvetica','bold');
+      doc.setTextColor(26, 24, 48);
+      doc.text(s.style, 26, y + 9);
+
+      // Neutral tag
       doc.setFontSize(8); doc.setFont('helvetica','italic');
-      doc.setTextColor(150);
-      const neutralLines = doc.splitTextToSize(si.neutral_tag, 170);
-      doc.text(neutralLines, 20, y);
-      y += neutralLines.length * 4.5 + 4;
+      doc.setTextColor(120);
+      doc.text(neutralTagLines, 26, y + 15);
+      let ly = y + 15 + neutralTagLines.length * 4.5;
+
+      // Neutral body
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(100);
+      doc.text(neutralBodyLines, 26, ly);
+      ly += neutralBodyLines.length * 4.5 + 3;
+
+      // Tip
+      doc.setFontSize(7); doc.setFont('helvetica','bold');
+      doc.setTextColor(91, 79, 232);
+      doc.text('TRY THIS', 26, ly);
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(100);
+      doc.text(tipLines, 26, ly + 4);
+      y += blockH + 4;
+
     } else {
       // Full card for primary / secondary
-      const accentR = isPrimary ? 91  : 100;
-      const accentG = isPrimary ? 79  : 90;
-      const accentB = isPrimary ? 232 : 200;
-      const bgR     = isPrimary ? 236 : 244;
-      const bgG     = isPrimary ? 234 : 243;
-      const bgB     = isPrimary ? 253 : 255;
+      const accentR = isPrimary ? 91  : 110;
+      const accentG = isPrimary ? 79  : 100;
+      const accentB = isPrimary ? 232 : 210;
+
+      const tagLines   = doc.splitTextToSize(si.tag,   160);
+      const bodyLines  = doc.splitTextToSize(si.body,  160);
+      const useLines   = doc.splitTextToSize(si.use,   155);
+      const avoidLines = doc.splitTextToSize(si.avoid, 155);
+
+      const blockH = 6 + 8 + tagLines.length*4.5 + bodyLines.length*4.5 +
+                     6 + useLines.length*4.5 + 6 + avoidLines.length*4.5 + 8;
+
+      if (y + blockH > 278) { doc.addPage(); y = 20; }
 
       // Left accent bar
       doc.setFillColor(accentR, accentG, accentB);
-      doc.rect(20, y - 1, 3, 38, 'F');
+      doc.rect(20, y - 1, 3, blockH, 'F');
 
       // Rank label
       doc.setFontSize(7); doc.setFont('helvetica','bold');
       doc.setTextColor(accentR, accentG, accentB);
-      const rankLabel = isPrimary ? `PRIMARY STYLE · ${s.count}/8` : `SECONDARY STYLE · ${s.count}/8`;
-      doc.text(rankLabel, 26, y + 3);
+      doc.text(isPrimary ? `PRIMARY STYLE · ${s.count}/8` : `SECONDARY STYLE · ${s.count}/8`, 26, y + 4);
 
       // Style name
       doc.setFontSize(14); doc.setFont('helvetica','bold');
       doc.setTextColor(26, 24, 48);
-      doc.text(s.style, 26, y + 10);
+      doc.text(s.style, 26, y + 11);
 
-      // Tagline
+      // Tag
       doc.setFontSize(8.5); doc.setFont('helvetica','italic');
       doc.setTextColor(100);
-      const tagLines = doc.splitTextToSize(si.tag, 160);
-      doc.text(tagLines, 26, y + 16);
+      doc.text(tagLines, 26, y + 18);
+      let cy = y + 18 + tagLines.length * 4.5 + 2;
 
       // Body
       doc.setFont('helvetica','normal');
       doc.setTextColor(74, 70, 104);
-      const bodyLines = doc.splitTextToSize(si.body, 160);
-      doc.text(bodyLines, 26, y + 16 + tagLines.length * 4.5 + 2);
+      doc.text(bodyLines, 26, cy);
+      cy += bodyLines.length * 4.5 + 5;
 
-      // Use when / Go easy chips
-      const chipY = y + 16 + tagLines.length * 4.5 + bodyLines.length * 4.5 + 4;
+      // Use when
       doc.setFontSize(7); doc.setFont('helvetica','bold');
       doc.setTextColor(22, 163, 74);
-      doc.text('USE WHEN', 26, chipY);
-      doc.setFont('helvetica','normal');
+      doc.text('USE WHEN', 26, cy);
+      doc.setFontSize(8); doc.setFont('helvetica','normal');
       doc.setTextColor(100);
-      const useLines = doc.splitTextToSize(si.use, 155);
-      doc.text(useLines, 26, chipY + 4);
+      doc.text(useLines, 26, cy + 4);
+      cy += 4 + useLines.length * 4.5 + 4;
 
-      const avoidY = chipY + 4 + useLines.length * 4;
+      // Go easy
       doc.setFontSize(7); doc.setFont('helvetica','bold');
       doc.setTextColor(194, 105, 10);
-      doc.text('GO EASY', 26, avoidY);
-      doc.setFont('helvetica','normal');
+      doc.text('GO EASY', 26, cy);
+      doc.setFontSize(8); doc.setFont('helvetica','normal');
       doc.setTextColor(100);
-      const avoidLines = doc.splitTextToSize(si.avoid, 155);
-      doc.text(avoidLines, 26, avoidY + 4);
-
-      y = avoidY + 4 + avoidLines.length * 4 + 8;
+      doc.text(avoidLines, 26, cy + 4);
+      y += blockH + 6;
     }
   });
 
