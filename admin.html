@@ -250,7 +250,26 @@
     .mini-name { font-size: 0.73rem; color: var(--text-2); flex: 1; }
     .mini-val  { font-size: 0.68rem; color: var(--text-3); }
 
-    /* ── EMPTY STATE ────────────────────────────────────────────────────── */
+    tr.excluded-row td { opacity: 0.4; }
+    tr.excluded-row:hover td { opacity: 0.6; }
+    .excl-btn {
+      font-size: 0.7rem; font-weight: 700; cursor: pointer;
+      padding: 0.2rem 0.55rem; border-radius: 5px; border: none;
+      font-family: var(--font); transition: all 0.15s; white-space: nowrap;
+    }
+    .excl-btn.exclude { background: var(--red-bg); color: var(--red); }
+    .excl-btn.exclude:hover { filter: brightness(0.9); }
+    .excl-btn.include { background: var(--green-bg); color: var(--green); }
+    .excl-btn.include:hover { filter: brightness(0.9); }
+    .toggle-excl-btn {
+      padding: 0.5rem 1rem; border: 1.5px solid var(--border);
+      background: var(--surface); border-radius: 10px;
+      font-family: var(--font); font-size: 0.78rem; font-weight: 600;
+      color: var(--text-3); cursor: pointer; transition: all 0.15s;
+      box-shadow: var(--shadow-sm);
+    }
+    .toggle-excl-btn:hover { color: var(--text); box-shadow: var(--shadow-md); }
+    .toggle-excl-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
     .empty { text-align: center; padding: 3rem 1rem; color: var(--text-3); font-size: 0.88rem; }
 
     /* ── LOADING ────────────────────────────────────────────────────────── */
@@ -304,6 +323,9 @@
       <option value="slider">Slider</option>
       <option value="ranking">Ranking</option>
     </select>
+    <button class="toggle-excl-btn" id="excl-toggle" onclick="toggleShowExcluded()" title="Show or hide excluded responses">
+      <span id="excl-toggle-icon">👁</span> <span id="excl-toggle-lbl">Show excluded</span>
+    </button>
     <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
   </div>
 
@@ -380,6 +402,7 @@
               <th>ρ</th>
               <th>Duration</th>
               <th>Completed</th>
+              <th></th>
               <th></th>
             </tr>
           </thead>
@@ -461,6 +484,16 @@ function logout() {
 
 // ── DATA FETCH ────────────────────────────────────────────────────────────────
 let ALL = [];
+let showExcluded = false;
+
+function toggleShowExcluded() {
+  showExcluded = !showExcluded;
+  const btn = document.getElementById('excl-toggle');
+  const lbl = document.getElementById('excl-toggle-lbl');
+  btn.classList.toggle('active', showExcluded);
+  lbl.textContent = showExcluded ? 'Hide excluded' : 'Show excluded';
+  renderAll();
+}
 
 async function loadData() {
   document.getElementById('table-loading').style.display = 'block';
@@ -513,24 +546,26 @@ function populateStudyFilter() {
     studies.map(s => `<option value="${s}"${s===current?' selected':''}>${s}</option>`).join('');
 }
 
-function filtered() {
+function filtered(includeExcluded = false) {
   const inst  = document.getElementById('sel-inst').value;
   const study = document.getElementById('sel-study').value;
   return ALL.filter(r =>
     (!inst  || r.instrument === inst) &&
-    (!study || r.study_id   === study)
+    (!study || r.study_id   === study) &&
+    (includeExcluded || !r.excluded)
   );
 }
 
 // ── RENDER ALL ────────────────────────────────────────────────────────────────
 function renderAll() {
-  const rows = filtered();
-  renderStats(rows);
-  renderRho(rows);
-  renderBias(rows);
-  renderRTTKI(rows);
-  renderRTInst(rows);
-  renderTable(rows);
+  const analysisRows = filtered(false);          // always excludes flagged rows
+  const tableRows    = filtered(showExcluded);   // respects toggle
+  renderStats(analysisRows);
+  renderRho(analysisRows);
+  renderBias(analysisRows);
+  renderRTTKI(analysisRows);
+  renderRTInst(analysisRows);
+  renderTable(tableRows);
 }
 
 // ── STATS ─────────────────────────────────────────────────────────────────────
@@ -831,8 +866,11 @@ function renderTable(rows) {
     const dur    = r.total_duration_ms ? (r.total_duration_ms/60000).toFixed(1)+'m' : '—';
     const date   = r.completed_at ? new Date(r.completed_at).toLocaleDateString() : '—';
     const pid    = (r.prolific_id || '').slice(0,10) + (r.prolific_id?.length > 10 ? '…' : '');
+    const exclCls  = r.excluded ? 'excl-btn include' : 'excl-btn exclude';
+    const exclLbl  = r.excluded ? '✓ Include' : '✕ Exclude';
+    const rowCls   = r.excluded ? 'excluded-row' : '';
     return `
-      <tr>
+      <tr class="${rowCls}" id="row-${idx}">
         <td style="font-family:monospace;font-size:0.75rem">${pid || '—'}</td>
         <td>${r.study_id || '—'}</td>
         <td><span class="badge badge-${r.instrument}">${r.instrument || '—'}</span></td>
@@ -841,10 +879,11 @@ function renderTable(rows) {
         <td>${rho !== null ? `<span class="rho-chip ${rhoCls}">${rhoStr}</span>` : '—'}</td>
         <td>${dur}</td>
         <td>${date}</td>
+        <td><button class="${exclCls}" id="excl-btn-${idx}" onclick="toggleExclude(${idx},'${r.session_id}',${!!r.excluded})">${exclLbl}</button></td>
         <td><span class="expand-btn" onclick="toggleRow(${idx})">Details ↓</span></td>
       </tr>
-      <tr id="exp-${idx}" style="display:none" class="exp-row">
-        <td colspan="9">
+      <tr id="exp-${idx}" style="display:none" class="exp-row${r.excluded?' excluded-row':''}">
+        <td colspan="10">
           <div class="exp-inner">
             <div>
               <div class="exp-col-title">TKI Scores</div>
@@ -873,6 +912,52 @@ function toggleRow(idx) {
   const show = row.style.display === 'none';
   row.style.display = show ? 'table-row' : 'none';
   btn.textContent = show ? 'Details ↑' : 'Details ↓';
+}
+
+async function toggleExclude(idx, sessionId, currentlyExcluded) {
+  const newState = !currentlyExcluded;
+  const btn = document.getElementById('excl-btn-' + idx);
+  btn.textContent = '…'; btn.disabled = true;
+
+  try {
+    const r = await fetch('/api/exclude-response', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: _pw, session_id: sessionId, excluded: newState }),
+    });
+
+    if (!r.ok) throw new Error('Server error');
+
+    // Update local data so we don't need a full reload
+    const record = ALL.find(r => r.session_id === sessionId);
+    if (record) record.excluded = newState;
+
+    // Update button
+    btn.textContent = newState ? '✓ Include' : '✕ Exclude';
+    btn.className   = newState ? 'excl-btn include' : 'excl-btn exclude';
+    btn.disabled    = false;
+    btn.onclick     = () => toggleExclude(idx, sessionId, newState);
+
+    // Dim/undim the row
+    document.getElementById('row-' + idx).className = newState ? 'excluded-row' : '';
+    const expRow = document.getElementById('exp-' + idx);
+    expRow.className = newState ? 'exp-row excluded-row' : 'exp-row';
+
+    // Re-render analysis panels (not the table) with updated exclusions
+    const analysisRows = filtered(false);
+    renderStats(analysisRows);
+    renderRho(analysisRows);
+    renderBias(analysisRows);
+    renderRTTKI(analysisRows);
+    renderRTInst(analysisRows);
+
+  } catch(e) {
+    btn.textContent = 'Error';
+    btn.disabled = false;
+    setTimeout(() => {
+      btn.textContent = currentlyExcluded ? '✓ Include' : '✕ Exclude';
+    }, 1500);
+  }
 }
 
 // ── SAMPLE DATA (for dev/demo when Supabase not configured) ───────────────────
