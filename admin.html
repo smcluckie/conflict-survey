@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Survey Analysis · Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&display=swap" rel="stylesheet">
+
+  <script>
+    // No secrets here — password is checked server-side via /api/admin-data
+    window.ACFG = {};
+  </script>
+
+  <style>
+    :root {
+      --bg:        #EDEAF6;
+      --surface:   #F8F7FF;
+      --surface-2: #E4E0F4;
+      --surface-3: #D8D3ED;
+      --text:      #1A1830;
+      --text-2:    #4A4668;
+      --text-3:    #8E8AAE;
+      --accent:    #5B4FE8;
+      --accent-bg: #ECEAFD;
+      --accent-dk: #4338CA;
+      --green:     #16A34A;
+      --green-bg:  #DCFCE7;
+      --amber:     #C2690A;
+      --amber-bg:  #FEF0DC;
+      --red:       #DC2626;
+      --red-bg:    #FEE2E2;
+      --border:    rgba(26,24,48,0.09);
+      --shadow-sm: 0 1px 3px rgba(26,24,48,0.06), 0 2px 10px rgba(26,24,48,0.05);
+      --shadow-md: 0 2px 6px rgba(26,24,48,0.07), 0 4px 20px rgba(26,24,48,0.07);
+      --radius:    12px;
+      --font:      'Plus Jakarta Sans', system-ui, sans-serif;
+    }
+    [data-theme="dark"] {
+      --bg:        #0E0D1B;
+      --surface:   #18162A;
+      --surface-2: #221F36;
+      --surface-3: #2C2842;
+      --text:      #F0EEFF;
+      --text-2:    #B6B2D6;
+      --text-3:    #68648C;
+      --accent:    #7C70F5;
+      --accent-bg: #231F4A;
+      --accent-dk: #9B92F8;
+      --green:     #4ADE80;
+      --green-bg:  #052E16;
+      --amber:     #F59E0B;
+      --amber-bg:  #271D06;
+      --red:       #F87171;
+      --red-bg:    #2D0A0A;
+      --border:    rgba(255,255,255,0.07);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.3), 0 2px 10px rgba(0,0,0,0.2);
+      --shadow-md: 0 2px 6px rgba(0,0,0,0.35), 0 4px 20px rgba(0,0,0,0.25);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font); font-size: 15px; line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── NAV ─────────────────────────────────────────────────────────────── */
+    nav {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 0 1.5rem; height: 52px;
+      display: flex; align-items: center; gap: 1.25rem;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: var(--shadow-sm);
+    }
+    .nav-brand { font-weight: 800; font-size: 0.9rem; letter-spacing: -0.01em; color: var(--accent); text-decoration: none; }
+    .nav-title { font-size: 0.8rem; color: var(--text-3); font-weight: 500; }
+    nav .spacer { flex: 1; }
+    .nav-btn {
+      font-family: var(--font); font-size: 0.78rem; font-weight: 600;
+      background: var(--surface-2); color: var(--text-3);
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 0.3rem 0.75rem; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .nav-btn:hover { color: var(--text); }
+
+    /* ── LAYOUT ─────────────────────────────────────────────────────────── */
+    .page { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
+
+    /* ── LOGIN ──────────────────────────────────────────────────────────── */
+    #login-screen {
+      max-width: 340px; margin: 6rem auto; text-align: center;
+    }
+    .login-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 2rem;
+      box-shadow: var(--shadow-md);
+    }
+    .login-card h2 { font-size: 1.2rem; margin-bottom: 0.3rem; }
+    .login-card p  { font-size: 0.83rem; color: var(--text-3); margin-bottom: 1.5rem; }
+    input.pw {
+      width: 100%; padding: 0.8rem 1rem;
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-family: var(--font); font-size: 0.95rem; color: var(--text);
+      background: var(--surface-2); outline: none; margin-bottom: 0.75rem;
+      transition: border-color 0.2s;
+    }
+    input.pw:focus { border-color: var(--accent); }
+
+    /* ── BUTTONS ────────────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      border: none; border-radius: 10px; cursor: pointer;
+      font-family: var(--font); font-weight: 700; font-size: 0.88rem;
+      transition: all 0.15s; gap: 0.35rem;
+    }
+    .btn-primary { background: var(--accent); color: #fff; padding: 0.75rem 1.75rem; box-shadow: 0 2px 12px rgba(91,79,232,0.35); width: 100%; }
+    .btn-primary:hover { background: var(--accent-dk); transform: translateY(-1px); }
+    .btn-sm { padding: 0.35rem 0.9rem; font-size: 0.75rem; background: var(--surface-2); color: var(--text-3); border: 1px solid var(--border); }
+    .btn-sm:hover { color: var(--text); }
+    .err { font-size: 0.78rem; color: var(--red); margin-top: 0.5rem; }
+
+    /* ── CONTROLS BAR ───────────────────────────────────────────────────── */
+    .controls {
+      display: flex; align-items: center; gap: 0.75rem;
+      margin-bottom: 1.75rem; flex-wrap: wrap;
+    }
+    select.field-select {
+      padding: 0.55rem 1rem; border: 1.5px solid var(--border);
+      border-radius: 10px; font-family: var(--font); font-size: 0.85rem;
+      color: var(--text); background: var(--surface);
+      cursor: pointer; outline: none; box-shadow: var(--shadow-sm);
+    }
+    select.field-select:focus { border-color: var(--accent); }
+    .ctrl-label { font-size: 0.75rem; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; }
+    .refresh-btn {
+      margin-left: auto; padding: 0.5rem 1.1rem;
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: 10px; font-family: var(--font); font-size: 0.8rem;
+      font-weight: 600; color: var(--text-3); cursor: pointer;
+      box-shadow: var(--shadow-sm); transition: all 0.15s;
+    }
+    .refresh-btn:hover { color: var(--text); box-shadow: var(--shadow-md); }
+
+    /* ── STAT CARDS ─────────────────────────────────────────────────────── */
+    .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 2rem; }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.1rem 1.25rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .stat-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-3); margin-bottom: 0.4rem; }
+    .stat-val   { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text); line-height: 1; }
+    .stat-sub   { font-size: 0.73rem; color: var(--text-3); margin-top: 0.3rem; }
+
+    /* ── SECTION TITLES ─────────────────────────────────────────────────── */
+    .section { margin-bottom: 2.25rem; }
+    .section-title {
+      font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.12em; color: var(--accent); margin-bottom: 1rem;
+    }
+
+    /* ── TWO-COL ────────────────────────────────────────────────────────── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
+
+    /* ── PANEL ──────────────────────────────────────────────────────────── */
+    .panel {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.25rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .panel-title { font-size: 0.8rem; font-weight: 700; color: var(--text); margin-bottom: 1rem; }
+    .panel-sub   { font-size: 0.72rem; color: var(--text-3); margin-top: 0.25rem; }
+
+    /* ── RHO DISTRIBUTION ───────────────────────────────────────────────── */
+    .rho-summary { display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 1rem; }
+    .rho-big  { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; }
+    .rho-lbl  { font-size: 0.75rem; color: var(--text-3); }
+    .rho-bars { display: flex; flex-direction: column; gap: 0.35rem; }
+    .rho-row  { display: flex; align-items: center; gap: 0.6rem; font-size: 0.72rem; }
+    .rho-bucket { min-width: 80px; color: var(--text-3); }
+    .rho-bar-w  { flex: 1; height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+    .rho-bar    { height: 6px; border-radius: 3px; background: var(--accent); transition: width 0.6s; }
+    .rho-n      { min-width: 28px; text-align: right; color: var(--text-3); }
+
+    /* ── STYLE BIAS BARS ────────────────────────────────────────────────── */
+    .bias-row { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.6rem; }
+    .bias-style { min-width: 110px; font-size: 0.78rem; font-weight: 600; color: var(--text-2); }
+    .bias-bars  { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+    .bias-bar-wrap { display: flex; align-items: center; gap: 0.4rem; }
+    .bias-bar-label { font-size: 0.6rem; min-width: 26px; color: var(--text-3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+    .bias-bar-bg { flex: 1; height: 7px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+    .bias-bar-fill { height: 7px; border-radius: 4px; transition: width 0.7s; }
+    .fill-tki  { background: var(--accent); }
+    .fill-inst { background: var(--amber); }
+    .bias-val  { font-size: 0.68rem; color: var(--text-3); min-width: 28px; text-align: right; }
+    .bias-legend { display: flex; gap: 1rem; margin-bottom: 0.85rem; }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+
+    /* ── RT TABLE ───────────────────────────────────────────────────────── */
+    .rt-row { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.45rem; }
+    .rt-item { font-size: 0.75rem; color: var(--text-2); flex: 1; line-height: 1.4; }
+    .rt-bar-w { width: 90px; height: 5px; background: var(--surface-2); border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+    .rt-bar   { height: 5px; background: var(--green); border-radius: 3px; transition: width 0.6s; }
+    .rt-bar.slow { background: var(--amber); }
+    .rt-bar.very-slow { background: var(--red); }
+    .rt-ms    { font-size: 0.7rem; color: var(--text-3); min-width: 45px; text-align: right; }
+
+    /* ── RESPONSES TABLE ────────────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    th {
+      text-align: left; padding: 0.6rem 0.75rem;
+      font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--text-3);
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-2); white-space: nowrap;
+    }
+    td {
+      padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border);
+      color: var(--text-2); vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--surface-2); }
+    .badge {
+      display: inline-block; font-size: 0.62rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      padding: 0.15rem 0.45rem; border-radius: 4px;
+    }
+    .badge-pit     { background: var(--accent-bg); color: var(--accent); }
+    .badge-hybrid  { background: var(--amber-bg);  color: var(--amber); }
+    .badge-slider  { background: var(--green-bg);  color: var(--green); }
+    .badge-ranking { background: var(--surface-2); color: var(--text-3); }
+    .rho-chip {
+      display: inline-block; font-size: 0.72rem; font-weight: 700;
+      padding: 0.1rem 0.45rem; border-radius: 5px;
+    }
+    .rho-high   { background: var(--green-bg);  color: var(--green); }
+    .rho-mid    { background: var(--amber-bg);  color: var(--amber); }
+    .rho-low    { background: var(--red-bg);    color: var(--red); }
+    .expand-btn { cursor: pointer; color: var(--accent); font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
+
+    /* ── EXPANDED ROW ───────────────────────────────────────────────────── */
+    .exp-row td { background: var(--surface-2) !important; }
+    .exp-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding: 0.5rem 0; }
+    .exp-col-title { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.5rem; }
+    .mini-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem; }
+    .mini-rank { font-size: 0.7rem; font-weight: 800; color: var(--accent); min-width: 16px; }
+    .mini-name { font-size: 0.73rem; color: var(--text-2); flex: 1; }
+    .mini-val  { font-size: 0.68rem; color: var(--text-3); }
+
+    /* ── EMPTY STATE ────────────────────────────────────────────────────── */
+    .empty { text-align: center; padding: 3rem 1rem; color: var(--text-3); font-size: 0.88rem; }
+
+    /* ── LOADING ────────────────────────────────────────────────────────── */
+    .spinner { width: 32px; height: 32px; margin: 2rem auto; border: 3px solid var(--surface-2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── RESPONSIVE ─────────────────────────────────────────────────────── */
+    @media (max-width: 700px) {
+      .stat-grid { grid-template-columns: 1fr 1fr; }
+      .two-col   { grid-template-columns: 1fr; }
+      .exp-inner { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="/">Conflict Survey</a>
+  <span class="nav-title">Analysis Dashboard</span>
+  <div class="spacer"></div>
+  <button class="nav-btn" onclick="toggleTheme()">🌙/☀️</button>
+  <button class="nav-btn" onclick="logout()">Log out</button>
+</nav>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <h2>Analysis Dashboard</h2>
+    <p>Enter the admin password to continue.</p>
+    <input class="pw" type="password" id="pw" placeholder="Password" autocomplete="off">
+    <button class="btn btn-primary" onclick="doLogin()">Enter</button>
+    <p class="err" id="pw-err" style="display:none">Incorrect password.</p>
+  </div>
+</div>
+
+<!-- MAIN DASHBOARD -->
+<div id="dashboard" style="display:none">
+<div class="page">
+
+  <!-- Controls -->
+  <div class="controls">
+    <span class="ctrl-label">Study</span>
+    <select class="field-select" id="sel-study" onchange="loadData()">
+      <option value="">All studies</option>
+    </select>
+    <span class="ctrl-label" style="margin-left:0.5rem">Instrument</span>
+    <select class="field-select" id="sel-inst" onchange="renderAll()">
+      <option value="">All</option>
+      <option value="pit">Pit</option>
+      <option value="hybrid">Hybrid</option>
+      <option value="slider">Slider</option>
+      <option value="ranking">Ranking</option>
+    </select>
+    <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+  </div>
+
+  <!-- Overview stats -->
+  <div class="stat-grid" id="stat-grid">
+    <div class="stat-card"><div class="stat-label">Total Responses</div><div class="stat-val" id="s-total">—</div><div class="stat-sub">all time</div></div>
+    <div class="stat-card"><div class="stat-label">Avg Duration</div><div class="stat-val" id="s-dur">—</div><div class="stat-sub">minutes</div></div>
+    <div class="stat-card"><div class="stat-label">Bonus Rate</div><div class="stat-val" id="s-bonus">—</div><div class="stat-sub">completed optional section</div></div>
+    <div class="stat-card"><div class="stat-label">Mean ρ (TKI vs Inst)</div><div class="stat-val" id="s-rho">—</div><div class="stat-sub">Spearman rank correlation</div></div>
+  </div>
+
+  <!-- Instrument breakdown -->
+  <div class="section">
+    <div class="section-title">Responses by Instrument</div>
+    <div class="stat-grid" id="inst-grid">
+      <div class="stat-card"><div class="stat-label">Pit</div><div class="stat-val" id="n-pit">—</div></div>
+      <div class="stat-card"><div class="stat-label">Hybrid</div><div class="stat-val" id="n-hybrid">—</div></div>
+      <div class="stat-card"><div class="stat-label">Slider</div><div class="stat-val" id="n-slider">—</div></div>
+      <div class="stat-card"><div class="stat-label">Ranking</div><div class="stat-val" id="n-ranking">—</div></div>
+    </div>
+  </div>
+
+  <!-- Main analysis panels -->
+  <div class="two-col">
+
+    <!-- Convergent validity -->
+    <div class="panel">
+      <div class="panel-title">Convergent Validity — Spearman ρ</div>
+      <div class="panel-sub" style="margin-bottom:1rem;font-size:0.73rem;color:var(--text-3)">Rank correlation between TKI order and instrument order, per participant.</div>
+      <div id="rho-panel"><div class="empty">No data yet.</div></div>
+    </div>
+
+    <!-- Style bias -->
+    <div class="panel">
+      <div class="panel-title">Style Frequency Bias</div>
+      <div class="panel-sub" style="margin-bottom:1rem;font-size:0.73rem;color:var(--text-3)">Average normalised score per style. TKI is known to inflate Collaborating &amp; Compromising.</div>
+      <div class="bias-legend">
+        <span><span class="legend-dot" style="background:var(--accent)"></span><span style="font-size:0.72rem;color:var(--text-2)">TKI</span></span>
+        <span><span class="legend-dot" style="background:var(--amber)"></span><span style="font-size:0.72rem;color:var(--text-2)">Instrument</span></span>
+      </div>
+      <div id="bias-panel"><div class="empty">No data yet.</div></div>
+    </div>
+
+  </div>
+
+  <!-- Response times -->
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-title">TKI Item Response Times</div>
+      <div class="panel-sub" style="margin-bottom:1rem;font-size:0.73rem;color:var(--text-3)">Mean RT per item across all participants. Slow items = ambiguous pairs.</div>
+      <div id="rt-tki-panel"><div class="empty">No data yet.</div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title" id="rt-inst-title">Instrument Response Times</div>
+      <div class="panel-sub" style="margin-bottom:1rem;font-size:0.73rem;color:var(--text-3)">Mean RT per matchup / item. Slow = unclear distinction between those styles.</div>
+      <div id="rt-inst-panel"><div class="empty">No data yet.</div></div>
+    </div>
+  </div>
+
+  <!-- Individual responses -->
+  <div class="section">
+    <div class="section-title">Individual Responses</div>
+    <div class="panel" style="padding:0;overflow:hidden">
+      <div id="table-loading" class="empty"><div class="spinner"></div></div>
+      <div class="table-wrap" id="table-wrap" style="display:none">
+        <table id="resp-table">
+          <thead>
+            <tr>
+              <th>Prolific ID</th>
+              <th>Study</th>
+              <th>Instrument</th>
+              <th>TKI Top</th>
+              <th>Inst Top</th>
+              <th>ρ</th>
+              <th>Duration</th>
+              <th>Completed</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="resp-tbody"></tbody>
+        </table>
+      </div>
+      <div id="table-empty" class="empty" style="display:none">No responses yet for this filter.</div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+'use strict';
+
+// ── THEME ─────────────────────────────────────────────────────────────────────
+function toggleTheme() {
+  const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('admin_theme', t);
+}
+(function() {
+  const t = localStorage.getItem('admin_theme') || (window.matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', t);
+})();
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+let _pw = '';
+
+async function doLogin() {
+  const v = document.getElementById('pw').value;
+  if (!v) return;
+
+  // Test the password against the server — if /api/admin-data returns 401, it's wrong
+  document.getElementById('pw-err').style.display = 'none';
+  const btn = document.querySelector('#login-screen .btn-primary');
+  btn.textContent = 'Checking…'; btn.disabled = true;
+
+  try {
+    const r = await fetch('/api/admin-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: v, study: '' }),
+    });
+
+    if (r.status === 401) {
+      document.getElementById('pw-err').style.display = 'block';
+      btn.textContent = 'Enter'; btn.disabled = false;
+      return;
+    }
+
+    if (!r.ok) throw new Error('Server error ' + r.status);
+
+    _pw = v;  // keep in memory only — never written to storage
+    ALL = await r.json();
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    populateStudyFilter();
+    renderAll();
+
+  } catch(e) {
+    document.getElementById('pw-err').textContent = 'Connection error — try again.';
+    document.getElementById('pw-err').style.display = 'block';
+  }
+
+  btn.textContent = 'Enter'; btn.disabled = false;
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+function logout() {
+  _pw = '';
+  ALL = [];
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'block';
+  document.getElementById('pw').value = '';
+}
+
+// ── DATA FETCH ────────────────────────────────────────────────────────────────
+let ALL = [];
+
+async function loadData() {
+  document.getElementById('table-loading').style.display = 'block';
+  document.getElementById('table-wrap').style.display = 'none';
+  document.getElementById('table-empty').style.display = 'none';
+
+  // Dev mode — no API available (e.g. opening file:// locally)
+  if (window.location.protocol === 'file:') {
+    ALL = getSampleData();
+    populateStudyFilter();
+    renderAll();
+    return;
+  }
+
+  const study = document.getElementById('sel-study').value;
+
+  try {
+    const r = await fetch('/api/admin-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: _pw, study }),
+    });
+
+    if (r.status === 401) {
+      // Session expired or pw changed — kick back to login
+      logout();
+      return;
+    }
+
+    if (!r.ok) throw new Error('Server error ' + r.status);
+
+    ALL = await r.json();
+    populateStudyFilter();
+    renderAll();
+
+  } catch(e) {
+    console.error('Load error:', e);
+    // Fall back to sample data so the UI still shows something
+    ALL = getSampleData();
+    populateStudyFilter();
+    renderAll();
+  }
+}
+
+function populateStudyFilter() {
+  const sel = document.getElementById('sel-study');
+  const studies = [...new Set(ALL.map(r => r.study_id).filter(Boolean))].sort();
+  const current = sel.value;
+  sel.innerHTML = '<option value="">All studies</option>' +
+    studies.map(s => `<option value="${s}"${s===current?' selected':''}>${s}</option>`).join('');
+}
+
+function filtered() {
+  const inst  = document.getElementById('sel-inst').value;
+  const study = document.getElementById('sel-study').value;
+  return ALL.filter(r =>
+    (!inst  || r.instrument === inst) &&
+    (!study || r.study_id   === study)
+  );
+}
+
+// ── RENDER ALL ────────────────────────────────────────────────────────────────
+function renderAll() {
+  const rows = filtered();
+  renderStats(rows);
+  renderRho(rows);
+  renderBias(rows);
+  renderRTTKI(rows);
+  renderRTInst(rows);
+  renderTable(rows);
+}
+
+// ── STATS ─────────────────────────────────────────────────────────────────────
+function renderStats(rows) {
+  document.getElementById('s-total').textContent = rows.length;
+
+  const durations = rows.filter(r => r.total_duration_ms).map(r => r.total_duration_ms / 60000);
+  document.getElementById('s-dur').textContent = durations.length
+    ? (durations.reduce((a,b)=>a+b,0)/durations.length).toFixed(1)
+    : '—';
+
+  const bonusN = rows.filter(r => r.bonus_engagement).length;
+  document.getElementById('s-bonus').textContent = rows.length
+    ? Math.round(bonusN / rows.length * 100) + '%'
+    : '—';
+
+  const rhos = rows.map(r => spearman(r)).filter(x => x !== null);
+  document.getElementById('s-rho').textContent = rhos.length
+    ? (rhos.reduce((a,b)=>a+b,0)/rhos.length).toFixed(2)
+    : '—';
+
+  ['pit','hybrid','slider','ranking'].forEach(inst => {
+    document.getElementById('n-'+inst).textContent = rows.filter(r => r.instrument === inst).length;
+  });
+}
+
+// ── SPEARMAN ──────────────────────────────────────────────────────────────────
+function spearman(row) {
+  const tki  = row.tki_scores;
+  const inst = row.instrument_scores;
+  if (!tki || !inst || tki.length < 5 || inst.length < 5) return null;
+
+  const styles = ['Competing','Collaborating','Compromising','Avoiding','Accommodating'];
+  const tkiRank  = {};
+  const instRank = {};
+  tki.forEach(s  => tkiRank[s.style]  = s.rank);
+  inst.forEach(s => instRank[s.style] = s.rank);
+
+  let d2 = 0;
+  let n  = 0;
+  styles.forEach(s => {
+    if (tkiRank[s] != null && instRank[s] != null) {
+      d2 += Math.pow(tkiRank[s] - instRank[s], 2);
+      n++;
+    }
+  });
+  if (n < 3) return null;
+  return +(1 - (6 * d2) / (n * (n*n - 1))).toFixed(3);
+}
+
+// ── RHO PANEL ─────────────────────────────────────────────────────────────────
+function renderRho(rows) {
+  const rhos = rows.map(r => spearman(r)).filter(x => x !== null);
+  const el = document.getElementById('rho-panel');
+  if (!rhos.length) { el.innerHTML = '<div class="empty">No data yet.</div>'; return; }
+
+  const mean = rhos.reduce((a,b)=>a+b,0) / rhos.length;
+  const sd   = Math.sqrt(rhos.map(r=>(r-mean)**2).reduce((a,b)=>a+b,0)/rhos.length);
+
+  // Bucket into ranges
+  const buckets = [
+    { label:'0.8 – 1.0 (strong)',  min:0.8,  max:1.01, count:0 },
+    { label:'0.6 – 0.8 (good)',    min:0.6,  max:0.8,  count:0 },
+    { label:'0.4 – 0.6 (moderate)',min:0.4,  max:0.6,  count:0 },
+    { label:'0.2 – 0.4 (weak)',    min:0.2,  max:0.4,  count:0 },
+    { label:'< 0.2 (poor)',        min:-1,   max:0.2,  count:0 },
+  ];
+  rhos.forEach(r => { const b = buckets.find(b => r >= b.min && r < b.max); if(b) b.count++; });
+  const maxCount = Math.max(...buckets.map(b=>b.count), 1);
+
+  const rhoColor = mean >= 0.7 ? 'var(--green)' : mean >= 0.5 ? 'var(--amber)' : 'var(--red)';
+
+  el.innerHTML = `
+    <div class="rho-summary">
+      <span class="rho-big" style="color:${rhoColor}">${mean.toFixed(2)}</span>
+      <span class="rho-lbl">mean ρ &nbsp;±${sd.toFixed(2)} SD &nbsp;(n=${rhos.length})</span>
+    </div>
+    <div class="rho-bars">
+      ${buckets.map(b => `
+        <div class="rho-row">
+          <span class="rho-bucket">${b.label}</span>
+          <div class="rho-bar-w"><div class="rho-bar" style="width:${Math.round(b.count/maxCount*100)}%"></div></div>
+          <span class="rho-n">${b.count}</span>
+        </div>`).join('')}
+    </div>`;
+}
+
+// ── BIAS PANEL ────────────────────────────────────────────────────────────────
+function renderBias(rows) {
+  const el = document.getElementById('bias-panel');
+  const styles = ['Competing','Collaborating','Compromising','Avoiding','Accommodating'];
+  if (!rows.length) { el.innerHTML = '<div class="empty">No data yet.</div>'; return; }
+
+  // TKI: normalise count/8 → 0-1
+  const tkiAvg = {};
+  styles.forEach(s => {
+    const vals = rows.filter(r => r.tki_scores).map(r => {
+      const found = r.tki_scores.find(x => x.style === s);
+      return found ? (found.count / 8) : null;
+    }).filter(x => x !== null);
+    tkiAvg[s] = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+  });
+
+  // Instrument: normalise by max possible per instrument type
+  const instAvg = {};
+  styles.forEach(s => {
+    const vals = rows.filter(r => r.instrument_scores).map(r => {
+      const found = r.instrument_scores.find(x => x.style === s);
+      if (!found) return null;
+      // Pit: win_rate already 0-1
+      if (r.instrument === 'pit') return found.win_rate ?? (found.wins / Math.max(found.matches, 1));
+      // Hybrid: avg/5 → 0-1
+      if (r.instrument === 'hybrid') return (found.avg ?? 0) / 5;
+      // Slider: total / 20 → 0-1 (each item contributes up to 1.0 across 20 items)
+      if (r.instrument === 'slider') return (found.total ?? 0) / 20;
+      // Ranking: invert rank (5=best → 1.0, 1=worst → 0.0)
+      if (r.instrument === 'ranking') return (5 - (found.rank ?? 3)) / 4;
+      return null;
+    }).filter(x => x !== null);
+    instAvg[s] = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+  });
+
+  el.innerHTML = styles.map(s => `
+    <div class="bias-row">
+      <span class="bias-style">${s}</span>
+      <div class="bias-bars">
+        <div class="bias-bar-wrap">
+          <span class="bias-bar-label">TKI</span>
+          <div class="bias-bar-bg"><div class="bias-bar-fill fill-tki" style="width:${Math.round(tkiAvg[s]*100)}%"></div></div>
+          <span class="bias-val">${(tkiAvg[s]*100).toFixed(0)}%</span>
+        </div>
+        <div class="bias-bar-wrap">
+          <span class="bias-bar-label">Inst</span>
+          <div class="bias-bar-bg"><div class="bias-bar-fill fill-inst" style="width:${Math.round(instAvg[s]*100)}%"></div></div>
+          <span class="bias-val">${(instAvg[s]*100).toFixed(0)}%</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ── TKI ITEM RT ───────────────────────────────────────────────────────────────
+const TKI_ITEMS = [
+  'My view vs others feel valued',
+  'Stay quiet vs find solutions',
+  'Structure for everyone vs state needs',
+  'Adapt to surprises vs preserve connection',
+  'Hold back vs ease off',
+  'Nudge compromise vs look out for feelings',
+  'Say what needs saying vs adjust tone',
+  'Include in outcomes vs wait to speak',
+  'Try new approaches vs ensure voices heard',
+  'Stay quiet vs speak up',
+  'Solutions where heard vs speak up',
+  'Change tactics vs give space',
+  'Lead to agreement vs shift tone',
+  'Say what I believe vs adapt style',
+  'Let others resolve vs find solutions',
+  'Reduce tension vs speak up',
+  'Adapt quickly vs encourage understanding',
+  'Let dust settle vs meet in middle',
+  'Speak truth vs build connection',
+  'Bring structure vs don\'t get involved',
+];
+
+function renderRTTKI(rows) {
+  const el = document.getElementById('rt-tki-panel');
+  const itemRTs = Array.from({length:20}, (_,i) => {
+    const vals = rows.filter(r => r.tki_answers && Array.isArray(r.tki_answers))
+      .map(r => r.tki_answers[i]?.rt_ms).filter(x => x > 0 && x < 60000);
+    return { i, label: TKI_ITEMS[i], mean: vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length) : null, n: vals.length };
+  }).filter(x => x.mean !== null).sort((a,b) => b.mean - a.mean);
+
+  if (!itemRTs.length) { el.innerHTML = '<div class="empty">No data yet.</div>'; return; }
+  const maxRT = itemRTs[0].mean;
+
+  el.innerHTML = `<div style="max-height:320px;overflow-y:auto">` +
+    itemRTs.map(r => {
+      const cls = r.mean > 8000 ? 'very-slow' : r.mean > 5000 ? 'slow' : '';
+      return `<div class="rt-row">
+        <span class="rt-item">${r.i+1}. ${r.label}</span>
+        <div class="rt-bar-w"><div class="rt-bar ${cls}" style="width:${Math.round(r.mean/maxRT*100)}%"></div></div>
+        <span class="rt-ms">${(r.mean/1000).toFixed(1)}s</span>
+      </div>`;
+    }).join('') + `</div>`;
+}
+
+// ── INSTRUMENT RT ─────────────────────────────────────────────────────────────
+const STYLE_NAMES = {
+  As:'Competing', Cp:'Collaborating', Rv:'Avoiding', Md:'Compromising', Fx:'Accommodating'
+};
+const PIT_MATCHUPS = [
+  ['As','Cp'],['As','Rv'],['As','Md'],['As','Fx'],
+  ['Cp','Rv'],['Cp','Md'],['Cp','Fx'],
+  ['Rv','Md'],['Rv','Fx'],['Md','Fx'],
+];
+
+function renderRTInst(rows) {
+  const el    = document.getElementById('rt-inst-panel');
+  const title = document.getElementById('rt-inst-title');
+  const inst  = document.getElementById('sel-inst').value;
+
+  if (!rows.length) { el.innerHTML = '<div class="empty">No data yet.</div>'; return; }
+
+  // Pit
+  if (inst === 'pit' || (!inst && rows.some(r => r.instrument === 'pit'))) {
+    title.textContent = 'Pit Matchup Response Times';
+    const pitRows = rows.filter(r => r.instrument === 'pit' && Array.isArray(r.instrument_answers));
+    // Build pair RT map from adaptive history (each entry has codeA, codeB, rt_ms)
+    const pairRTs = {};
+    pitRows.forEach(r => {
+      r.instrument_answers.forEach(h => {
+        if (!h.codeA || !h.codeB || !h.rt_ms) return;
+        const key = [h.codeA, h.codeB].sort().join('_');
+        if (!pairRTs[key]) pairRTs[key] = [];
+        pairRTs[key].push(h.rt_ms);
+      });
+    });
+    const items = Object.entries(pairRTs).map(([key, vals]) => {
+      const [a, b] = key.split('_');
+      return { label: `${STYLE_NAMES[a]} vs ${STYLE_NAMES[b]}`, mean: Math.round(vals.reduce((x,y)=>x+y,0)/vals.length), n: vals.length };
+    }).sort((a,b) => b.mean - a.mean);
+    if (!items.length) { el.innerHTML = '<div class="empty">No pit data yet.</div>'; return; }
+    const max = items[0].mean;
+    el.innerHTML = items.map(r => {
+      const cls = r.mean > 8000 ? 'very-slow' : r.mean > 5000 ? 'slow' : '';
+      return `<div class="rt-row">
+        <span class="rt-item">${r.label} <span style="color:var(--text-3);font-size:0.65rem">(n=${r.n})</span></span>
+        <div class="rt-bar-w"><div class="rt-bar ${cls}" style="width:${Math.round(r.mean/max*100)}%"></div></div>
+        <span class="rt-ms">${(r.mean/1000).toFixed(1)}s</span>
+      </div>`;
+    }).join('');
+    return;
+  }
+
+  // Hybrid / Slider — item-level
+  if (inst === 'hybrid' || inst === 'slider') {
+    title.textContent = inst === 'hybrid' ? 'Hybrid Item Response Times' : 'Slider Item Response Times';
+    const instRows = rows.filter(r => r.instrument === inst && Array.isArray(r.instrument_answers));
+    const itemRTs = Array.from({length:20}, (_,i) => {
+      const vals = instRows.map(r => {
+        const ans = r.instrument_answers[i];
+        if (!ans) return null;
+        if (inst === 'hybrid') return ans.rt?.a ?? ans.rt?.b ?? null;
+        return ans.rt_ms ?? null;
+      }).filter(x => x > 0 && x < 60000);
+      return { i, mean: vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length) : null, n: vals.length };
+    }).filter(x => x.mean).sort((a,b) => b.mean - a.mean);
+    if (!itemRTs.length) { el.innerHTML = '<div class="empty">No data yet.</div>'; return; }
+    const max = itemRTs[0].mean;
+    el.innerHTML = itemRTs.map(r => {
+      const cls = r.mean > 8000 ? 'very-slow' : r.mean > 5000 ? 'slow' : '';
+      return `<div class="rt-row">
+        <span class="rt-item">Item ${r.i+1} — ${TKI_ITEMS[r.i]}</span>
+        <div class="rt-bar-w"><div class="rt-bar ${cls}" style="width:${Math.round(r.mean/max*100)}%"></div></div>
+        <span class="rt-ms">${(r.mean/1000).toFixed(1)}s</span>
+      </div>`;
+    }).join('');
+    return;
+  }
+
+  // Ranking — just one overall RT
+  if (inst === 'ranking') {
+    title.textContent = 'Ranking Response Times';
+    const vals = rows.filter(r => r.instrument === 'ranking' && r.instrument_answers?.length)
+      .map(r => r.instrument_answers[0]?.rt_ms).filter(x => x > 0);
+    if (!vals.length) { el.innerHTML = '<div class="empty">No data yet.</div>'; return; }
+    const mean = Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
+    el.innerHTML = `<p style="font-size:0.88rem;color:var(--text-2)">Avg time to complete ranking: <strong>${(mean/1000).toFixed(1)}s</strong> (n=${vals.length})</p>`;
+    return;
+  }
+
+  // Mixed instruments — show pit if present, otherwise generic
+  title.textContent = 'Instrument Response Times';
+  el.innerHTML = '<div class="empty" style="padding:1.5rem">Select a specific instrument above to see RT detail.</div>';
+}
+
+// ── TABLE ─────────────────────────────────────────────────────────────────────
+function renderTable(rows) {
+  document.getElementById('table-loading').style.display = 'none';
+  const tbody = document.getElementById('resp-tbody');
+
+  if (!rows.length) {
+    document.getElementById('table-empty').style.display = 'block';
+    document.getElementById('table-wrap').style.display = 'none';
+    tbody.innerHTML = '';
+    return;
+  }
+
+  document.getElementById('table-wrap').style.display = 'block';
+  document.getElementById('table-empty').style.display = 'none';
+
+  tbody.innerHTML = rows.map((r, idx) => {
+    const rho    = spearman(r);
+    const rhoStr = rho !== null ? rho.toFixed(2) : '—';
+    const rhoCls = rho === null ? '' : rho >= 0.7 ? 'rho-high' : rho >= 0.4 ? 'rho-mid' : 'rho-low';
+    const tkiTop = r.tki_scores?.[0]?.style ?? '—';
+    const iTop   = r.instrument_scores?.[0]?.style ?? '—';
+    const dur    = r.total_duration_ms ? (r.total_duration_ms/60000).toFixed(1)+'m' : '—';
+    const date   = r.completed_at ? new Date(r.completed_at).toLocaleDateString() : '—';
+    const pid    = (r.prolific_id || '').slice(0,10) + (r.prolific_id?.length > 10 ? '…' : '');
+    return `
+      <tr>
+        <td style="font-family:monospace;font-size:0.75rem">${pid || '—'}</td>
+        <td>${r.study_id || '—'}</td>
+        <td><span class="badge badge-${r.instrument}">${r.instrument || '—'}</span></td>
+        <td>${tkiTop}</td>
+        <td>${iTop}</td>
+        <td>${rho !== null ? `<span class="rho-chip ${rhoCls}">${rhoStr}</span>` : '—'}</td>
+        <td>${dur}</td>
+        <td>${date}</td>
+        <td><span class="expand-btn" onclick="toggleRow(${idx})">Details ↓</span></td>
+      </tr>
+      <tr id="exp-${idx}" style="display:none" class="exp-row">
+        <td colspan="9">
+          <div class="exp-inner">
+            <div>
+              <div class="exp-col-title">TKI Scores</div>
+              ${(r.tki_scores||[]).map(s=>`<div class="mini-row"><span class="mini-rank">${s.rank}</span><span class="mini-name">${s.style}</span><span class="mini-val">${s.count}/8</span></div>`).join('')}
+            </div>
+            <div>
+              <div class="exp-col-title">Instrument Scores (${r.instrument})</div>
+              ${(r.instrument_scores||[]).map(s=>{
+                const val = s.win_rate!=null ? (s.win_rate*100).toFixed(0)+'%' : s.avg!=null ? s.avg+'avg' : s.total!=null ? s.total : `rank ${s.rank}`;
+                return `<div class="mini-row"><span class="mini-rank">${s.rank}</span><span class="mini-name">${s.style}</span><span class="mini-val">${val}</span></div>`;
+              }).join('')}
+              ${r.bonus_engagement ? `<div style="margin-top:0.75rem"><div class="exp-col-title">Engagement</div>
+                ${Object.entries(r.bonus_engagement).filter(([k])=>k!=='open'&&k!=='at').map(([k,v])=>`<div class="mini-row"><span class="mini-name">${k}</span><span class="mini-val">${v}/7</span></div>`).join('')}
+                ${r.bonus_engagement.open ? `<div style="font-size:0.73rem;color:var(--text-2);margin-top:0.4rem;font-style:italic">"${r.bonus_engagement.open}"</div>` : ''}
+              </div>` : ''}
+            </div>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+function toggleRow(idx) {
+  const row = document.getElementById('exp-' + idx);
+  const btn = row.previousElementSibling.querySelector('.expand-btn');
+  const show = row.style.display === 'none';
+  row.style.display = show ? 'table-row' : 'none';
+  btn.textContent = show ? 'Details ↑' : 'Details ↓';
+}
+
+// ── SAMPLE DATA (for dev/demo when Supabase not configured) ───────────────────
+function getSampleData() {
+  const styles = ['Competing','Collaborating','Compromising','Avoiding','Accommodating'];
+  const instruments = ['pit','hybrid','slider','ranking'];
+  const rows = [];
+  for (let i = 0; i < 12; i++) {
+    const tkiRanks = [...styles].sort(() => Math.random()-0.5);
+    const instRanks = [...tkiRanks].map((s,j) => j < 3 ? s : tkiRanks[Math.floor(Math.random()*5)]);
+    const inst = instruments[i % 4];
+    rows.push({
+      session_id: 'demo-' + i,
+      prolific_id: '5f3c' + Math.random().toString(36).slice(2,8),
+      study_id: i < 6 ? 'study_001' : 'study_002',
+      instrument: inst,
+      completed_at: new Date(Date.now() - i * 3600000).toISOString(),
+      total_duration_ms: (8 + Math.random()*10) * 60000,
+      tki_scores: tkiRanks.map((s,j) => ({ style:s, code:'XX', count: 8-j, rank: j+1 })),
+      instrument_scores: tkiRanks.map((s,j) => {
+        const rank = j + (Math.random() > 0.7 ? 1 : 0);
+        return inst === 'pit'
+          ? { style:s, code:'XX', wins: 4-j, matches: 4, win_rate: (4-j)/4, rank: j+1 }
+          : inst === 'hybrid'
+          ? { style:s, code:'XX', total: (5-j)*3, count:8, avg: (5-j)*0.6, rank: j+1 }
+          : inst === 'slider'
+          ? { style:s, code:'XX', total: 20-j*3, rank: j+1 }
+          : { style:s, code:'XX', rank: j+1, rt_ms: 8000 };
+      }),
+      tki_answers: Array.from({length:20},(_,k)=>({item:k,choice:Math.random()>0.5?'a':'b',rt_ms:2000+Math.random()*8000})),
+      instrument_answers: inst === 'pit'
+        ? Array.from({length: 8+Math.floor(Math.random()*7)}, (_,k) => ({
+            round: k+1, codeA: ['As','Cp','Rv','Md','Fx'][k%5], codeB: ['Cp','Rv','Md','Fx','As'][k%5],
+            winner: Math.random()>0.5?'As':'Cp', rt_ms: 2000+Math.random()*9000
+          }))
+        : Array.from({length:20},(_,k)=>({a:Math.ceil(Math.random()*5),b:Math.ceil(Math.random()*5),rt:{a:2000+Math.random()*8000}})),
+      bonus_engagement: Math.random()>0.6 ? { accuracy:5, surprise:3, useful:6, enjoyment:5, trust:4, open:'Felt accurate overall.', at: new Date().toISOString() } : null,
+    });
+  }
+  return rows;
+}
+</script>
+</body>
+</html>
