@@ -793,8 +793,8 @@ function getPitCard(code) {
   return cards[idx];
 }
 const PIT_CODES = ['As','Cp','Rv','Md','Fx'];
-const PIT_MAX   = 15;
-const PIT_MIN   = 6;
+const PIT_MAX   = 20;
+const PIT_MIN   = 10;  // don't check settlement before round 10
 // PIT_STATE is reset each time the pit starts (see startInst)
 let PS = null;
 
@@ -991,12 +991,12 @@ function pitPickNext() {
 function pitIsSettled() {
   if (PS.round < PIT_MIN) return false;
   if (PS.round >= PIT_MAX) return true;
-  // Every style must have played at least 2 matches
-  if (!PIT_CODES.every(c => PS.matches[c] >= 2)) return false;
-  // All adjacent win-rate gaps must be >= 0.25
+  // Every style must have played at least 3 matches
+  if (!PIT_CODES.every(c => PS.matches[c] >= 3)) return false;
+  // All adjacent win-rate gaps must be >= 0.15
   const ranked = [...PIT_CODES].sort((a,b) => pitWR(b) - pitWR(a));
   for (let i = 0; i < ranked.length - 1; i++) {
-    if (pitWR(ranked[i]) - pitWR(ranked[i+1]) < 0.25) return false;
+    if (pitWR(ranked[i]) - pitWR(ranked[i+1]) < 0.15) return false;
   }
   return true;
 }
