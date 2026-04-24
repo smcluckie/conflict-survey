@@ -342,6 +342,18 @@
       font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
       letter-spacing: 0.12em; color: var(--text-3); margin: 1.5rem 0 0.75rem;
     }
+    /* Second instrument comparison */
+    .ir-row {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.55rem 0.85rem; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; margin-bottom: 0.4rem; font-size: 0.85rem;
+    }
+    .ir-rank {
+      font-size: 0.68rem; font-weight: 800; color: var(--accent);
+      min-width: 18px; letter-spacing: 0.05em;
+    }
+    .ir-name  { flex: 1; color: var(--text); font-weight: 600; }
+    .ir-score { font-size: 0.78rem; color: var(--text-3); font-family: monospace; }
 
     /* ══ COMPLETION CODE ═════════════════════════════════════════════════════ */
     .cc-box { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); color: #fff; border-radius: var(--radius); padding: 2rem; text-align: center; margin-bottom: 1.5rem; box-shadow: 0 4px 24px rgba(91,79,232,0.42); }
@@ -587,6 +599,14 @@
   <h2>Your Conflict Style Profile</h2>
   <p style="font-size:0.87rem;margin-bottom:1.5rem">Based on your survey responses. Your dominant styles are shown first.</p>
   <div id="results-cards"></div>
+
+  <div id="inst-compare" style="margin-top:2.25rem;display:none">
+    <hr style="border:none;border-top:1px solid var(--border);margin:0 0 1.5rem">
+    <h3 style="font-size:1.05rem;margin-bottom:0.5rem">Your second assessment: <span id="inst-name"></span></h3>
+    <p style="font-size:0.84rem;color:var(--text-3);margin-bottom:1rem">How this alternative format ranked your styles.</p>
+    <div id="inst-ranks"></div>
+  </div>
+
   <div class="btn-row apart" style="margin-top:2rem">
     <button class="btn btn-ghost" onclick="dlPDF()">⬇ Download PDF</button>
     <button class="btn btn-primary" onclick="goTo('engagement')" style="background:var(--amber);box-shadow:0 2px 14px rgba(194,105,10,0.38)">Optional Feedback →</button>
@@ -1434,6 +1454,33 @@ function renderResults() {
   });
 
   container.innerHTML = html;
+
+  // ── Second instrument comparison ──
+  const compareBox = document.getElementById('inst-compare');
+  if (S.iScores && S.iScores.length && S.inst && S.inst !== 'pit') {
+    const nm = { ranking: 'Style Ranking', pit: 'The Pit', hybrid: 'Hybrid Rating', slider: 'Visual Slider' };
+    document.getElementById('inst-name').textContent = nm[S.inst] || S.inst;
+    const ranksHtml = S.iScores.map(s => {
+      let scoreLabel;
+      if (s.win_rate != null)      scoreLabel = `${Math.round(s.win_rate * 100)}% win rate`;
+      else if (s.avg != null)      scoreLabel = `${s.avg} avg`;
+      else if (s.total != null)    scoreLabel = `${s.total} total`;
+      else                         scoreLabel = `rank ${s.rank}`;
+      return `<div class="ir-row"><span class="ir-rank">${s.rank}</span><span class="ir-name">${s.style}</span><span class="ir-score">${scoreLabel}</span></div>`;
+    }).join('');
+    document.getElementById('inst-ranks').innerHTML = ranksHtml;
+    compareBox.style.display = '';
+  } else if (S.iScores && S.iScores.length && S.inst === 'pit') {
+    // For Pit, still show the ranking even though it's based on adaptive win rates
+    document.getElementById('inst-name').textContent = 'The Pit (adaptive)';
+    const ranksHtml = S.iScores.map(s =>
+      `<div class="ir-row"><span class="ir-rank">${s.rank}</span><span class="ir-name">${s.style}</span><span class="ir-score">${Math.round(s.win_rate * 100)}% (${s.wins}/${s.matches})</span></div>`
+    ).join('');
+    document.getElementById('inst-ranks').innerHTML = ranksHtml;
+    compareBox.style.display = '';
+  } else {
+    compareBox.style.display = 'none';
+  }
 }
 function bars(id,scores,mx) {
   const el=document.getElementById(id); if(!el||!scores)return;
