@@ -978,21 +978,53 @@ function finishRanking() {
 // ── PIT — ADAPTIVE ENGINE ─────────────────────────────────────────────────────
 
 function pitInitState() {
+  // Shuffle the forced openers so A/B position and axis order aren't confounded
+  const openers = PIT_FORCED_OPENERS.map(pair =>
+    Math.random() < 0.5 ? pair : [pair[1], pair[0]]
+  ).sort(() => Math.random() - 0.5);
+
   PS = {
     wins:    { As:0, Cp:0, Rv:0, Md:0, Fx:0 },
     matches: { As:0, Cp:0, Rv:0, Md:0, Fx:0 },
-    history: [], // {round, codeA, codeB, winner, rt_ms, wrA, wrB}
+    history: [], // {round, codeA, codeB, winner, rt_ms, wrA, wrB, kind}
     round:   0,
     codeA:   null,
     codeB:   null,
+    nextKind: 'adaptive',  // set by pitPickNext, read by pitSel
+    openers,
   };
 }
+
+// The first two rounds are forced: the two theoretical "axis" pairs.
+// Compete vs Accommodate (assertiveness axis) and Collaborate vs Avoid (cooperativeness axis).
+// Randomized so order isn't a confound.
+const PIT_FORCED_OPENERS = [
+  ['As', 'Fx'],  // Compete vs Accommodate
+  ['Cp', 'Rv'],  // Collaborate vs Avoid
+];
 
 function pitWR(code) {
   return PS.matches[code] === 0 ? 0.5 : PS.wins[code] / PS.matches[code];
 }
 
 function pitPickNext() {
+  // Forced openers — rounds 1 and 2 are always the two axis pairs
+  if (PS.round < PS.openers.length) {
+    PS.nextKind = 'opener';
+    return PS.openers[PS.round];
+  }
+
+  // If we're at round 19 (the last slot before cap), check for ties to break
+  if (PS.round === PIT_MAX - 1) {
+    const tieBreaker = pitFindTieToBreak();
+    if (tieBreaker) {
+      PS.nextKind = 'tiebreak';
+      return tieBreaker;
+    }
+  }
+
+  PS.nextKind = 'adaptive';
+
   // Sort styles by current win rate descending
   const ranked = [...PIT_CODES].sort((a,b) => pitWR(b) - pitWR(a));
 
@@ -1017,15 +1049,27 @@ function pitPickNext() {
   return [bestA, bestB];
 }
 
+// At the cap, look for any adjacent pair in the current ranking that's tied on win rate.
+// If found, return them so we can force a head-to-head tie-breaker.
+function pitFindTieToBreak() {
+  const ranked = [...PIT_CODES].sort((a,b) => pitWR(b) - pitWR(a));
+  for (let i = 0; i < ranked.length - 1; i++) {
+    if (pitWR(ranked[i]) === pitWR(ranked[i+1])) {
+      return [ranked[i], ranked[i+1]];
+    }
+  }
+  return null;
+}
+
 function pitIsSettled() {
   if (PS.round < PIT_MIN) return false;
   if (PS.round >= PIT_MAX) return true;
   // Every style must have played at least 3 matches
   if (!PIT_CODES.every(c => PS.matches[c] >= 3)) return false;
-  // All adjacent win-rate gaps must be >= 0.20
+  // All adjacent win-rate gaps must be >= 0.15
   const ranked = [...PIT_CODES].sort((a,b) => pitWR(b) - pitWR(a));
   for (let i = 0; i < ranked.length - 1; i++) {
-    if (pitWR(ranked[i]) - pitWR(ranked[i+1]) < 0.20) return false;
+    if (pitWR(ranked[i]) - pitWR(ranked[i+1]) < 0.15) return false;
   }
   return true;
 }
@@ -1062,11 +1106,13 @@ function pitSel(ch) {
   PS.wins[winner]++;
   PS.matches[winner]++;
   PS.matches[loser]++;
+
   PS.history.push({
     round: PS.round + 1,
     codeA: PS.codeA, codeB: PS.codeB,
     winner, loser, rt_ms: rt,
     wrA: pitWR(PS.codeA), wrB: pitWR(PS.codeB),
+    kind: PS.nextKind,
   });
   PS.round++;
 
