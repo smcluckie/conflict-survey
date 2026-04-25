@@ -355,6 +355,24 @@
     .splash-status { font-size: 0.72rem; color: var(--text-3); }
     .splash-status.ok  { color: var(--green); }
     .splash-status.err { color: var(--red); }
+    .inst-checks {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 0.4rem; margin-top: 0.1rem;
+    }
+    .inst-check {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 0.75rem; background: var(--surface-2);
+      border: 1.5px solid var(--border); border-radius: 8px;
+      cursor: pointer; font-size: 0.82rem; color: var(--text-2);
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .inst-check:hover { border-color: var(--text-3); }
+    .inst-check input { margin: 0; cursor: pointer; accent-color: var(--accent); }
+    .inst-check input:checked ~ span:first-of-type { color: var(--accent); font-weight: 700; }
+    .inst-check:has(input:checked) { border-color: var(--accent); background: var(--accent-bg); }
+    .inst-check .inst-desc {
+      margin-left: auto; font-size: 0.7rem; color: var(--text-3);
+    }
 
     /* ── DUAL RHO ──────────────────────────────────────────────────────── */
     .rho-dual-summary {
@@ -427,7 +445,7 @@
 
   <!-- Splash editor (active config) -->
   <details class="splash-editor" id="splash-editor">
-    <summary>Edit splash text (active study config)</summary>
+    <summary>Edit active study config (splash + instruments)</summary>
     <div class="splash-body">
       <div class="splash-meta" id="splash-meta">Loading active config…</div>
       <div class="splash-field">
@@ -437,6 +455,15 @@
       <div class="splash-field">
         <label for="splash-body-input">Splash body</label>
         <textarea id="splash-body-input" rows="5" placeholder="(empty)"></textarea>
+      </div>
+      <div class="splash-field">
+        <label>Instruments to run <span style="font-weight:500;text-transform:none;letter-spacing:0;color:var(--text-3)">— ranking always runs last automatically</span></label>
+        <div class="inst-checks" id="inst-checks">
+          <label class="inst-check"><input type="checkbox" value="tki">    <span>TKI</span><span class="inst-desc">forced-choice</span></label>
+          <label class="inst-check"><input type="checkbox" value="pit">    <span>Pit</span><span class="inst-desc">adaptive head-to-head</span></label>
+          <label class="inst-check"><input type="checkbox" value="hybrid"> <span>Hybrid</span><span class="inst-desc">Likert</span></label>
+          <label class="inst-check"><input type="checkbox" value="slider"> <span>Slider</span><span class="inst-desc">visual</span></label>
+        </div>
       </div>
       <div class="splash-actions">
         <button class="splash-save" id="splash-save-btn" onclick="saveSplash()">Save changes</button>
@@ -676,6 +703,10 @@ async function loadSplash() {
       titleI.disabled = true;
       bodyI.disabled  = true;
       btn.disabled    = true;
+      document.querySelectorAll('#inst-checks input[type=checkbox]').forEach(cb => {
+        cb.checked  = false;
+        cb.disabled = true;
+      });
       return;
     }
 
@@ -685,9 +716,14 @@ async function loadSplash() {
     btn.disabled    = false;
     titleI.value = active.splash_title || '';
     bodyI.value  = active.splash_body  || '';
-    const inst = Array.isArray(active.instruments) && active.instruments.length
-      ? active.instruments.join(', ') : '(none)';
-    meta.innerHTML = `Editing <strong>${escapeHtml(active.name || '(unnamed)')}</strong> · instruments: ${escapeHtml(inst)}`;
+    // Populate instrument checkboxes
+    const activeInst = Array.isArray(active.instruments) ? active.instruments : [];
+    document.querySelectorAll('#inst-checks input[type=checkbox]').forEach(cb => {
+      cb.checked  = activeInst.includes(cb.value);
+      cb.disabled = false;
+    });
+    const inst = activeInst.length ? activeInst.join(', ') : '(none)';
+    meta.innerHTML = `Editing <strong>${escapeHtml(active.name || '(unnamed)')}</strong> · currently: ${escapeHtml(inst)}`;
   } catch(e) {
     meta.innerHTML = `<span style="color:var(--red)">Error loading config: ${escapeHtml(e.message)}</span>`;
     btn.disabled = true;
@@ -703,8 +739,16 @@ async function saveSplash() {
 
   const newTitle = titleI.value;
   const newBody  = bodyI.value;
+  const newInst  = Array.from(document.querySelectorAll('#inst-checks input[type=checkbox]:checked'))
+    .map(cb => cb.value);
+
+  const oldInst  = Array.isArray(_activeConfig.instruments) ? _activeConfig.instruments : [];
+  const sameInst = oldInst.length === newInst.length &&
+                   oldInst.every(x => newInst.includes(x));
+
   if (newTitle === (_activeConfig.splash_title || '') &&
-      newBody  === (_activeConfig.splash_body  || '')) {
+      newBody  === (_activeConfig.splash_body  || '') &&
+      sameInst) {
     status.textContent = 'No changes.';
     status.className = 'splash-status';
     return;
@@ -725,6 +769,7 @@ async function saveSplash() {
         id:           _activeConfig.id,
         splash_title: newTitle,
         splash_body:  newBody,
+        instruments:  newInst,
       }),
     });
     if (!r.ok) {
@@ -733,6 +778,11 @@ async function saveSplash() {
     }
     _activeConfig.splash_title = newTitle;
     _activeConfig.splash_body  = newBody;
+    _activeConfig.instruments  = newInst;
+    // Refresh the meta line so currently-selected list stays accurate
+    const metaEl = document.getElementById('splash-meta');
+    const instLbl = newInst.length ? newInst.join(', ') : '(none)';
+    metaEl.innerHTML = `Editing <strong>${escapeHtml(_activeConfig.name || '(unnamed)')}</strong> · currently: ${escapeHtml(instLbl)}`;
     status.textContent = '✓ Saved';
     status.className = 'splash-status ok';
     setTimeout(() => { status.textContent = ''; status.className = 'splash-status'; }, 2500);
