@@ -188,8 +188,7 @@
     .rank-item.drag-over { border-color: var(--accent); background: var(--accent-bg); }
     .rank-n     { font-size: 0.95rem; font-weight: 800; color: var(--accent); min-width: 22px; }
     .rank-grip  { color: var(--text-3); font-size: 0.9rem; }
-    .rank-name  { font-weight: 700; font-size: 0.88rem; color: var(--text); letter-spacing: -0.01em; }
-    .rank-blurb { font-size: 0.76rem; color: var(--text-3); margin-top: 0.1rem; }
+    .rank-blurb { font-size: 0.85rem; color: var(--text); line-height: 1.5; }
 
     /* ══ PIT ═════════════════════════════════════════════════════════════════ */
     .pit-wrap { margin: 1rem 0; }
@@ -385,7 +384,7 @@
 <div class="screen active" id="screen-splash">
   <h1 id="splash-title">Welcome to our study!</h1>
   <div id="splash-body">
-    <p>You will be presented with multiple choice questions on how you prefer to deal with conflict, disagreement, and negotiation strategies. When answering, please think about how you typically deal with these kinds of situations and answer as honestly as you can. Many questions will look the same, but that is by design.</p>
+    <p>You will be presented with up to 21 multiple choice questions on how you prefer to deal with conflict, disagreement, and negotiation strategies. When answering, please think about how you typically deal with these kinds of situations and answer as honestly as you can. Many questions will look the same, but that is by design. The whole process should take around 4 minutes to complete.</p>
     <p><strong>This is not a test, there are no right answers.</strong></p>
     <p>Your answers are completely anonymous beyond the collection of your Prolific ID for payment verification purposes. Your participation is voluntary, but you must complete every question in order to receive payment.</p>
   </div>
@@ -396,7 +395,7 @@
 
 <!-- ═══════════════════════ PROLIFIC ID ══════════════════════════════════════ -->
 <div class="screen" id="screen-prolific">
-  <span class="eyebrow">Step 1 of 2</span>
+  <span class="eyebrow">Part X of Y</span>
   <h2>Confirm your Prolific ID</h2>
   <p>Your ID is only used to confirm and process your payment and is deleted upon study completion.</p>
   <div id="pid-auto" style="display:none">
@@ -415,11 +414,11 @@
 
 <!-- ═══════════════════════ TKI INTRO ════════════════════════════════════════ -->
 <div class="screen" id="screen-tki-intro">
-  <span class="eyebrow">Part 1 of 2</span>
-  <h2>20 questions</h2>
+  <span class="eyebrow">Part X of Y</span>
+  <h2>A vs B</h2>
   <p>For each question you'll see two statements. Pick the one that sounds more like how you typically deal with conflict (arguments, disagreements, tension, etc.). Even if neither is a perfect fit, go with the closer one.</p>
   <p><strong>There are no right or wrong answers.</strong> Go with your gut. Your first instinct is usually most accurate.</p>
-  <div class="info">Takes about <strong>2-3 minutes.</strong> If you feel the need to go back and change an answer, you can click the back button below the statements.</div>
+  <div class="info">Takes about <strong>4 minutes.</strong> If you feel the need to go back and change an answer, you can click the back button below the statements.</div>
   <div class="btn-row">
     <button class="btn btn-primary btn-lg" onclick="startTKI()">Start →</button>
   </div>
@@ -441,11 +440,23 @@
 
 <!-- ═══════════════════════ RANKING ══════════════════════════════════════════ -->
 <div class="screen" id="screen-ranking">
-  <span class="eyebrow">Part 2 of 2</span>
-  <h2>Rank these five styles</h2>
+  <span class="eyebrow">Part X of Y</span>
+  <h2>Rank these descriptions</h2>
   <p style="font-size:0.9rem">Drag to reorder — <strong>most like you</strong> at the top, <strong>least like you</strong> at the bottom.</p>
   <ul class="rank-list" id="rank-list"></ul>
   <div class="btn-row end"><button class="btn btn-primary" onclick="finishRanking()">Submit →</button></div>
+</div>
+
+<!-- ═══════════════════════ PIT INTRO ════════════════════════════════════════ -->
+<div class="screen" id="screen-pit-intro">
+  <span class="eyebrow">Part X of Y</span>
+  <h2>A vs B</h2>
+  <p>For each question you'll see two statements. Pick the one that sounds more like how you typically deal with conflict (arguments, disagreements, tension, etc.). Even if neither is a perfect fit, go with the closer one.</p>
+  <p><strong>There are no right or wrong answers.</strong> Go with your gut. Your first instinct is usually most accurate.</p>
+  <div class="info">Takes about <strong>4 minutes.</strong></div>
+  <div class="btn-row">
+    <button class="btn btn-primary btn-lg" onclick="startPit()">Start →</button>
+  </div>
 </div>
 
 <!-- ═══════════════════════ PIT ═══════════════════════════════════════════════ -->
@@ -745,12 +756,20 @@ const PIT_MIN   = 10;  // don't check settlement before round 10
 // PIT_STATE is reset each time the pit starts (see nextInstrument)
 let PS = null;
 
+// Rank styles — content shown to participant. Each has an internal code (`c`)
+// and a description (`b`). The `n` (style name) is intentionally not used in
+// the ranking UI: participants rank descriptions blind so the style label
+// doesn't bias their choice. The code maps to the full style name via CM
+// at scoring time.
+//
+// PLACEHOLDER CONTENT — first-pass behavioral descriptions. Refine these as
+// the ranking instrument is validated.
 const RANK_STYLES = [
-  { c:'As', n:'Competing',     b:'When I think I\'m right or something important is at stake, I say so — directly and confidently. I don\'t back down easily.' },
-  { c:'Cp', n:'Collaborating', b:'When conflict comes up, my instinct is to understand where the other person is coming from before pushing my own view. I\'d rather take the time to work through it together.' },
-  { c:'Rv', n:'Avoiding',      b:'My first instinct is to withdraw or step back when conflict occurs, hoping it will resolve itself on its own.' },
-  { c:'Md', n:'Compromising',  b:'When there\'s a disagreement, I gravitate toward finding something that works for both of us — even if neither of us gets everything we want.' },
-  { c:'Fx', n:'Accommodating', b:'I tend to prioritize the relationship over being right. If the other person feels strongly, I\'ll often adjust my position.' },
+  { c:'As', b:'When something matters to me, I make my case clearly and directly. I\'m comfortable holding my ground when I think I\'m right, even if it creates friction.' },
+  { c:'Cp', b:'I\'d rather slow down and dig into what\'s really going on for both sides than rush to a decision. I\'m willing to put in the work for an answer that genuinely fits everyone.' },
+  { c:'Md', b:'My instinct is to look for a fair middle ground — somewhere both sides give a little, nobody walks away empty-handed, and we can move on.' },
+  { c:'Rv', b:'When tension comes up, I tend to step back and give it space. A lot of disagreements settle themselves if you don\'t feed them, and I\'d rather not get pulled in.' },
+  { c:'Fx', b:'I usually weigh the relationship more heavily than the specific issue. If the other person cares more, I\'m generally fine adjusting to keep things smooth.' },
 ];
 const ENG_Q = [
   { id:'accuracy',  q:'How accurately does this profile reflect how you actually handle conflict?', lo:'Not at all', hi:'Very accurately' },
@@ -766,7 +785,7 @@ const S = {
   sid: crypto.randomUUID(),
   tkiIdx:0, tkiA:[], tkiT:0,
   iA:[], iIdx:0, iT:0,
-  rOrder: RANK_STYLES.map(s=>s.c),
+  rOrder: [],
   tkiScores:null, iScores:null,
   engA:{}, t0:0,
   // Multi-instrument flow:
@@ -785,12 +804,36 @@ const S = {
 const STUDY = {
   name:        'Adaptive + Ranking',     // human-readable label saved with each response
   instruments: ['pit'], // ranking is appended automatically; do not include here
+  // Eyebrow labels per screen. Total parts excludes splash; "Part N of M" is
+  // counted from the prolific page onwards.
+  parts: { prolific: 'Part 1 of 3', pit: 'Part 2 of 3', ranking: 'Part 3 of 3' },
 };
+
+// Paint Part X of N labels into screens. Reads STUDY.parts; safe to call
+// before any screen is shown.
+function paintEyebrows() {
+  const map = {
+    'screen-prolific':  STUDY.parts.prolific,
+    'screen-tki-intro': STUDY.parts.tki,
+    'screen-tki':       STUDY.parts.tki,
+    'screen-pit-intro': STUDY.parts.pit,
+    'screen-pit':       STUDY.parts.pit,
+    'screen-ranking':   STUDY.parts.ranking,
+  };
+  Object.entries(map).forEach(([id, label]) => {
+    if (!label) return;
+    const screen = document.getElementById(id);
+    if (!screen) return;
+    const eb = screen.querySelector('.eyebrow');
+    if (eb) eb.textContent = label;
+  });
+}
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   initTheme();
   initLayout();
+  paintEyebrows();
   const p = new URLSearchParams(window.location.search);
   const pid = p.get(window.CFG.prolificParam) || p.get('pid') || '';
   if (pid) {
@@ -833,7 +876,7 @@ function nextInstrument() {
   S.iA = []; S.iIdx = 0; S.iT = Date.now();
 
   if (next === 'tki')      { showScreen('tki-intro'); return; }
-  if (next === 'pit')      { startPit(); return; }
+  if (next === 'pit')      { showScreen('pit-intro'); return; }
   if (next === 'ranking')  { buildRanking(); showScreen('ranking'); return; }
 
   // Unknown instrument — skip
@@ -897,11 +940,20 @@ function scoreTKI() {
 
 // ── RANKING ───────────────────────────────────────────────────────────────────
 function buildRanking() {
+  // Shuffle the initial presentation order so card position doesn't bias rank.
+  // We re-derive S.rOrder fresh each time the ranking screen is built.
+  const codes = RANK_STYLES.map(s => s.c);
+  for (let i = codes.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [codes[i], codes[j]] = [codes[j], codes[i]];
+  }
+  S.rOrder = codes;
+
   const ul=document.getElementById('rank-list'); ul.innerHTML='';
   S.rOrder.forEach((c,i)=>{
     const s=RANK_STYLES.find(x=>x.c===c), li=document.createElement('li');
     li.className='rank-item'; li.dataset.c=c; li.draggable=true;
-    li.innerHTML=`<span class="rank-n">${i+1}</span><span class="rank-grip">⠿</span><div><div class="rank-name">${s.n}</div><div class="rank-blurb">${s.b}</div></div>`;
+    li.innerHTML=`<span class="rank-n">${i+1}</span><span class="rank-grip">⠿</span><div><div class="rank-blurb">${s.b}</div></div>`;
     li.addEventListener('dragstart',ds); li.addEventListener('dragover',dov); li.addEventListener('drop',dd); li.addEventListener('dragend',de);
     ul.appendChild(li);
   });
@@ -1357,6 +1409,7 @@ function dlPDF(){
 
   let y = 50;
 
+  let lowerHeaderDrawn = false;
   scores.forEach((s) => {
     const si          = SI[s.style];
     const strength    = strengthOf(s, primaryKey);
@@ -1364,13 +1417,14 @@ function dlPDF(){
     const isSecondary = s.rank === 2 && strength != null && strength >= SECONDARY_THRESHOLD;
     const isLower     = !isPrimary && !isSecondary;
 
-    // Section divider before lower group
-    if (s.rank === 3) {
-      if (y + 12 > 270) { doc.addPage(); y = 20; }
-      y += 4;
-      doc.setDrawColor(220, 218, 230);
-      doc.line(20, y, 190, y);
-      y += 5;
+    // Section divider before lower group — always break to a fresh page
+    // so the top styles get page 1 and the rest get page 2. Fires on the
+    // first card classified as "lower" (which could be rank 2 if its
+    // strength is below threshold, or rank 3 otherwise).
+    if (isLower && !lowerHeaderDrawn) {
+      lowerHeaderDrawn = true;
+      doc.addPage();
+      y = 20;
       doc.setFontSize(7.5); doc.setFont('helvetica','bold');
       doc.setTextColor(142, 138, 174);
       doc.text('LESS DOMINANT STYLES IN YOUR PROFILE', 20, y);
