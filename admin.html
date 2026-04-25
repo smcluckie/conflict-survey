@@ -296,6 +296,102 @@
     .sim-compare-col.highlight { background: var(--accent-bg); }
     .sim-compare-col.highlight .sim-compare-val { color: var(--accent); }
 
+    /* ── SPLASH EDITOR ──────────────────────────────────────────────────── */
+    details.splash-editor {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); margin-bottom: 1.25rem;
+      box-shadow: var(--shadow-sm); overflow: hidden;
+    }
+    details.splash-editor > summary {
+      padding: 0.75rem 1rem; cursor: pointer; user-select: none;
+      font-size: 0.78rem; font-weight: 700; color: var(--text-2);
+      display: flex; align-items: center; justify-content: space-between;
+      list-style: none;
+    }
+    details.splash-editor > summary::-webkit-details-marker { display: none; }
+    details.splash-editor > summary::after {
+      content: '▾'; color: var(--text-3); transition: transform 0.2s;
+    }
+    details.splash-editor[open] > summary::after { transform: rotate(180deg); }
+    details.splash-editor > summary:hover { color: var(--text); }
+    .splash-body {
+      padding: 0 1rem 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .splash-meta {
+      font-size: 0.7rem; color: var(--text-3);
+      padding: 0.65rem 0; line-height: 1.5;
+    }
+    .splash-meta strong { color: var(--text-2); font-weight: 700; }
+    .splash-field { margin-bottom: 0.85rem; }
+    .splash-field label {
+      display: block; font-size: 0.68rem; font-weight: 700;
+      color: var(--text-3); text-transform: uppercase;
+      letter-spacing: 0.08em; margin-bottom: 0.35rem;
+    }
+    .splash-field input,
+    .splash-field textarea {
+      width: 100%; padding: 0.55rem 0.75rem;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      background: var(--surface-2); color: var(--text);
+      font-family: var(--font); font-size: 0.85rem; line-height: 1.5;
+      outline: none; transition: border-color 0.15s;
+      resize: vertical;
+    }
+    .splash-field input:focus,
+    .splash-field textarea:focus { border-color: var(--accent); }
+    .splash-actions {
+      display: flex; align-items: center; gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+    .splash-save {
+      padding: 0.5rem 1.1rem; background: var(--accent); color: #fff;
+      border: none; border-radius: 8px; cursor: pointer;
+      font-family: var(--font); font-size: 0.78rem; font-weight: 700;
+      transition: all 0.15s;
+    }
+    .splash-save:hover { background: var(--accent-dk); }
+    .splash-save:disabled { opacity: 0.5; cursor: default; }
+    .splash-status { font-size: 0.72rem; color: var(--text-3); }
+    .splash-status.ok  { color: var(--green); }
+    .splash-status.err { color: var(--red); }
+
+    /* ── DUAL RHO ──────────────────────────────────────────────────────── */
+    .rho-dual-summary {
+      display: flex; flex-direction: column; gap: 0.4rem;
+      margin-bottom: 1rem;
+    }
+    .rho-line {
+      display: flex; align-items: baseline; gap: 0.5rem;
+      font-size: 0.75rem; color: var(--text-3);
+    }
+    .rho-line .rho-line-lbl { min-width: 110px; font-weight: 600; }
+    .rho-line .rho-line-val { font-size: 1.1rem; font-weight: 800; letter-spacing: -0.02em; }
+    .rho-line .rho-line-meta { font-size: 0.7rem; }
+    .rho-line.tki     .rho-line-val { color: var(--accent); }
+    .rho-line.ranking .rho-line-val { color: var(--amber); }
+    .rho-bar.tki      { background: var(--accent); }
+    .rho-bar.ranking  { background: var(--amber); }
+    .rho-bucket-row {
+      display: flex; align-items: center; gap: 0.6rem;
+      font-size: 0.7rem; margin-bottom: 0.3rem;
+    }
+    .rho-bucket-row .rho-bucket { min-width: 78px; color: var(--text-3); }
+    .rho-bucket-row .rho-pair   { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+    .rho-bucket-row .rho-pair-row {
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .rho-bucket-row .rho-pair-lbl {
+      font-size: 0.58rem; min-width: 22px; color: var(--text-3);
+      font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .rho-bucket-row .rho-bar-w  { flex: 1; height: 5px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+    .rho-bucket-row .rho-bar    { height: 5px; border-radius: 3px; transition: width 0.6s; }
+    .rho-bucket-row .rho-n      { min-width: 22px; text-align: right; color: var(--text-3); font-size: 0.65rem; }
+    .rho-legend {
+      display: flex; gap: 1rem; margin-bottom: 0.85rem;
+    }
+
     /* ── RESPONSIVE ─────────────────────────────────────────────────────── */
     @media (max-width: 700px) {
       .stat-grid { grid-template-columns: 1fr 1fr; }
@@ -329,6 +425,26 @@
 <div id="dashboard" style="display:none">
 <div class="page">
 
+  <!-- Splash editor (active config) -->
+  <details class="splash-editor" id="splash-editor">
+    <summary>Edit splash text (active study config)</summary>
+    <div class="splash-body">
+      <div class="splash-meta" id="splash-meta">Loading active config…</div>
+      <div class="splash-field">
+        <label for="splash-title">Splash title</label>
+        <input type="text" id="splash-title" placeholder="(empty)">
+      </div>
+      <div class="splash-field">
+        <label for="splash-body-input">Splash body</label>
+        <textarea id="splash-body-input" rows="5" placeholder="(empty)"></textarea>
+      </div>
+      <div class="splash-actions">
+        <button class="splash-save" id="splash-save-btn" onclick="saveSplash()">Save changes</button>
+        <span class="splash-status" id="splash-status"></span>
+      </div>
+    </div>
+  </details>
+
   <!-- Controls -->
   <div class="controls">
     <span class="ctrl-label">Study</span>
@@ -354,7 +470,7 @@
     <div class="stat-card"><div class="stat-label">Total Responses</div><div class="stat-val" id="s-total">—</div><div class="stat-sub">all time</div></div>
     <div class="stat-card"><div class="stat-label">Avg Duration</div><div class="stat-val" id="s-dur">—</div><div class="stat-sub">minutes</div></div>
     <div class="stat-card"><div class="stat-label">Bonus Rate</div><div class="stat-val" id="s-bonus">—</div><div class="stat-sub">completed optional section</div></div>
-    <div class="stat-card"><div class="stat-label">Mean ρ (TKI vs Inst)</div><div class="stat-val" id="s-rho">—</div><div class="stat-sub">Spearman rank correlation</div></div>
+    <div class="stat-card"><div class="stat-label">Mean ρ</div><div class="stat-val" id="s-rho">—</div><div class="stat-sub" id="s-rho-sub">vs TKI baseline</div></div>
   </div>
 
   <!-- Instrument breakdown -->
@@ -374,7 +490,7 @@
     <!-- Convergent validity -->
     <div class="panel">
       <div class="panel-title">Convergent Validity — Spearman ρ</div>
-      <div class="panel-sub" style="margin-bottom:1rem;font-size:0.73rem;color:var(--text-3)">Rank correlation between TKI order and instrument order, per participant.</div>
+      <div class="panel-sub" style="margin-bottom:1rem;font-size:0.73rem;color:var(--text-3)">Rank correlation between the test instrument and each baseline (TKI forced-choice and self-ranking), per participant.</div>
       <div id="rho-panel"><div class="empty">No data yet.</div></div>
     </div>
 
@@ -503,6 +619,7 @@ async function doLogin() {
     document.getElementById('dashboard').style.display = 'block';
     populateStudyFilter();
     renderAll();
+    loadSplash();
 
   } catch(e) {
     document.getElementById('pw-err').textContent = 'Connection error — try again.';
@@ -520,6 +637,118 @@ function logout() {
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('login-screen').style.display = 'block';
   document.getElementById('pw').value = '';
+}
+
+// ── SPLASH EDITOR ─────────────────────────────────────────────────────────────
+let _activeConfig = null;  // {id, name, splash_title, splash_body, ...} or null
+
+async function loadSplash() {
+  const meta   = document.getElementById('splash-meta');
+  const titleI = document.getElementById('splash-title');
+  const bodyI  = document.getElementById('splash-body-input');
+  const status = document.getElementById('splash-status');
+  const btn    = document.getElementById('splash-save-btn');
+
+  status.textContent = '';
+  status.className = 'splash-status';
+  btn.disabled = true;
+
+  if (window.location.protocol === 'file:') {
+    meta.innerHTML = '<em>Dev mode — splash editing disabled.</em>';
+    return;
+  }
+
+  try {
+    const r = await fetch('/api/admin-config', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ password: _pw, action: 'list' }),
+    });
+    if (!r.ok) throw new Error('Server error ' + r.status);
+    const configs = await r.json();
+    const active  = Array.isArray(configs) ? configs.find(c => c.is_active) : null;
+
+    if (!active) {
+      _activeConfig = null;
+      meta.innerHTML = '<strong>No active config.</strong> Set one as active in Supabase before editing splash text.';
+      titleI.value = '';
+      bodyI.value  = '';
+      titleI.disabled = true;
+      bodyI.disabled  = true;
+      btn.disabled    = true;
+      return;
+    }
+
+    _activeConfig = active;
+    titleI.disabled = false;
+    bodyI.disabled  = false;
+    btn.disabled    = false;
+    titleI.value = active.splash_title || '';
+    bodyI.value  = active.splash_body  || '';
+    const inst = Array.isArray(active.instruments) && active.instruments.length
+      ? active.instruments.join(', ') : '(none)';
+    meta.innerHTML = `Editing <strong>${escapeHtml(active.name || '(unnamed)')}</strong> · instruments: ${escapeHtml(inst)}`;
+  } catch(e) {
+    meta.innerHTML = `<span style="color:var(--red)">Error loading config: ${escapeHtml(e.message)}</span>`;
+    btn.disabled = true;
+  }
+}
+
+async function saveSplash() {
+  if (!_activeConfig) return;
+  const titleI = document.getElementById('splash-title');
+  const bodyI  = document.getElementById('splash-body-input');
+  const status = document.getElementById('splash-status');
+  const btn    = document.getElementById('splash-save-btn');
+
+  const newTitle = titleI.value;
+  const newBody  = bodyI.value;
+  if (newTitle === (_activeConfig.splash_title || '') &&
+      newBody  === (_activeConfig.splash_body  || '')) {
+    status.textContent = 'No changes.';
+    status.className = 'splash-status';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  status.textContent = '';
+  status.className = 'splash-status';
+
+  try {
+    const r = await fetch('/api/admin-config', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        password:     _pw,
+        action:       'update',
+        id:           _activeConfig.id,
+        splash_title: newTitle,
+        splash_body:  newBody,
+      }),
+    });
+    if (!r.ok) {
+      const txt = await r.text();
+      throw new Error(`HTTP ${r.status}: ${txt.slice(0, 120)}`);
+    }
+    _activeConfig.splash_title = newTitle;
+    _activeConfig.splash_body  = newBody;
+    status.textContent = '✓ Saved';
+    status.className = 'splash-status ok';
+    setTimeout(() => { status.textContent = ''; status.className = 'splash-status'; }, 2500);
+  } catch(e) {
+    status.textContent = 'Save failed — ' + e.message;
+    status.className = 'splash-status err';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Save changes';
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
 }
 
 // ── DATA FETCH ────────────────────────────────────────────────────────────────
@@ -623,33 +852,78 @@ function renderStats(rows) {
     ? Math.round(bonusN / rows.length * 100) + '%'
     : '—';
 
-  const rhos = rows.map(r => spearman(r)).filter(x => x !== null);
-  document.getElementById('s-rho').textContent = rhos.length
-    ? (rhos.reduce((a,b)=>a+b,0)/rhos.length).toFixed(2)
-    : '—';
+  // Compute both baseline means. Headline = TKI baseline if it has data,
+  // else ranking baseline. Sub-line shows whichever the headline isn't.
+  const rhoPairs = rows.map(rhoForRow);
+  const tkiRhos     = rhoPairs.map(p => p.tki).filter(x => x !== null);
+  const rankingRhos = rhoPairs.map(p => p.ranking).filter(x => x !== null);
+  const mean = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
+  const sRho    = document.getElementById('s-rho');
+  const sRhoSub = document.getElementById('s-rho-sub');
+  if (tkiRhos.length) {
+    sRho.textContent = mean(tkiRhos).toFixed(2);
+    sRhoSub.textContent = rankingRhos.length
+      ? `vs TKI · ranking ${mean(rankingRhos).toFixed(2)}`
+      : 'vs TKI baseline';
+  } else if (rankingRhos.length) {
+    sRho.textContent = mean(rankingRhos).toFixed(2);
+    sRhoSub.textContent = 'vs ranking baseline';
+  } else {
+    sRho.textContent    = '—';
+    sRhoSub.textContent = 'no baselines available';
+  }
 
   ['pit','hybrid','slider','ranking'].forEach(inst => {
     document.getElementById('n-'+inst).textContent = rows.filter(r => r.instrument === inst).length;
   });
 }
 
-// ── SPEARMAN ──────────────────────────────────────────────────────────────────
-function spearman(row) {
-  const tki  = row.tki_scores;
-  const inst = row.instrument_scores;
-  if (!tki || !inst || tki.length < 5 || inst.length < 5) return null;
+// ── SPEARMAN / RANK HELPERS ───────────────────────────────────────────────────
+const STYLES = ['Competing','Collaborating','Compromising','Avoiding','Accommodating'];
 
-  const styles = ['Competing','Collaborating','Compromising','Avoiding','Accommodating'];
-  const tkiRank  = {};
-  const instRank = {};
-  tki.forEach(s  => tkiRank[s.style]  = s.rank);
-  inst.forEach(s => instRank[s.style] = s.rank);
+// Returns {style: rank} for an instrument from a row.
+// Prefers `all_results` (new format) and falls back to legacy columns
+// (`tki_scores` for tki, `instrument_scores` when row.instrument matches).
+function getRanks(row, instrument) {
+  if (row.all_results && row.all_results[instrument]?.scores) {
+    const map = {};
+    row.all_results[instrument].scores.forEach(s => { if (s.style) map[s.style] = s.rank; });
+    return Object.keys(map).length ? map : null;
+  }
+  if (instrument === 'tki' && Array.isArray(row.tki_scores)) {
+    const map = {};
+    row.tki_scores.forEach(s => { if (s.style) map[s.style] = s.rank; });
+    return Object.keys(map).length ? map : null;
+  }
+  if (row.instrument === instrument && Array.isArray(row.instrument_scores)) {
+    const map = {};
+    row.instrument_scores.forEach(s => { if (s.style) map[s.style] = s.rank; });
+    return Object.keys(map).length ? map : null;
+  }
+  return null;
+}
 
-  let d2 = 0;
-  let n  = 0;
-  styles.forEach(s => {
-    if (tkiRank[s] != null && instRank[s] != null) {
-      d2 += Math.pow(tkiRank[s] - instRank[s], 2);
+// Returns the test instrument key for a row — i.e. the non-baseline instrument
+// that ran (pit / hybrid / slider). Prefers all_results, falls back to the
+// legacy `instrument` column. Returns null if only baselines ran.
+function getTestInstrument(row) {
+  if (row.all_results && typeof row.all_results === 'object') {
+    const key = Object.keys(row.all_results).find(k => k !== 'tki' && k !== 'ranking');
+    if (key) return key;
+  }
+  if (row.instrument && row.instrument !== 'tki' && row.instrument !== 'ranking') {
+    return row.instrument;
+  }
+  return null;
+}
+
+// Spearman ρ between two rank maps over the five styles.
+function spearmanRanks(ranksA, ranksB) {
+  if (!ranksA || !ranksB) return null;
+  let d2 = 0, n = 0;
+  STYLES.forEach(s => {
+    if (ranksA[s] != null && ranksB[s] != null) {
+      d2 += Math.pow(ranksA[s] - ranksB[s], 2);
       n++;
     }
   });
@@ -657,40 +931,102 @@ function spearman(row) {
   return +(1 - (6 * d2) / (n * (n*n - 1))).toFixed(3);
 }
 
-// ── RHO PANEL ─────────────────────────────────────────────────────────────────
+// Compute ρ for both baselines for a single row.
+// Returns { test, tki, ranking } where tki and ranking are ρ values or null.
+function rhoForRow(row) {
+  const test = getTestInstrument(row);
+  if (!test) return { test: null, tki: null, ranking: null };
+  const testRanks = getRanks(row, test);
+  if (!testRanks) return { test, tki: null, ranking: null };
+  return {
+    test,
+    tki:     spearmanRanks(testRanks, getRanks(row, 'tki')),
+    ranking: spearmanRanks(testRanks, getRanks(row, 'ranking')),
+  };
+}
+
+// Backward-compatible single-value spearman, used by table column.
+// Prefers TKI baseline; falls back to ranking baseline if TKI didn't run.
+function spearman(row) {
+  const r = rhoForRow(row);
+  return r.tki ?? r.ranking;
+}
+
+// ── RHO PANEL (dual baseline) ─────────────────────────────────────────────────
+const RHO_BUCKETS = [
+  { label:'0.8 – 1.0', min:0.8,  max:1.01 },
+  { label:'0.6 – 0.8', min:0.6,  max:0.8  },
+  { label:'0.4 – 0.6', min:0.4,  max:0.6  },
+  { label:'0.2 – 0.4', min:0.2,  max:0.4  },
+  { label:'< 0.2',     min:-1,   max:0.2  },
+];
+
+function bucketize(rhos) {
+  return RHO_BUCKETS.map(b => ({
+    ...b,
+    count: rhos.filter(r => r >= b.min && r < b.max).length,
+  }));
+}
+
+function summaryLine(label, cls, rhos) {
+  if (!rhos.length) return `
+    <div class="rho-line ${cls}">
+      <span class="rho-line-lbl">${label}</span>
+      <span class="rho-line-meta">no data</span>
+    </div>`;
+  const m  = rhos.reduce((a,b)=>a+b,0) / rhos.length;
+  const sd = Math.sqrt(rhos.map(r => (r-m)**2).reduce((a,b)=>a+b,0)/rhos.length);
+  return `
+    <div class="rho-line ${cls}">
+      <span class="rho-line-lbl">${label}</span>
+      <span class="rho-line-val">${m.toFixed(2)}</span>
+      <span class="rho-line-meta">±${sd.toFixed(2)} SD · n=${rhos.length}</span>
+    </div>`;
+}
+
 function renderRho(rows) {
-  const rhos = rows.map(r => spearman(r)).filter(x => x !== null);
   const el = document.getElementById('rho-panel');
-  if (!rhos.length) { el.innerHTML = '<div class="empty">No data yet.</div>'; return; }
+  const pairs = rows.map(rhoForRow);
+  const tkiRhos     = pairs.map(p => p.tki).filter(x => x !== null);
+  const rankingRhos = pairs.map(p => p.ranking).filter(x => x !== null);
 
-  const mean = rhos.reduce((a,b)=>a+b,0) / rhos.length;
-  const sd   = Math.sqrt(rhos.map(r=>(r-mean)**2).reduce((a,b)=>a+b,0)/rhos.length);
+  if (!tkiRhos.length && !rankingRhos.length) {
+    el.innerHTML = '<div class="empty">No data yet.</div>';
+    return;
+  }
 
-  // Bucket into ranges
-  const buckets = [
-    { label:'0.8 – 1.0 (strong)',  min:0.8,  max:1.01, count:0 },
-    { label:'0.6 – 0.8 (good)',    min:0.6,  max:0.8,  count:0 },
-    { label:'0.4 – 0.6 (moderate)',min:0.4,  max:0.6,  count:0 },
-    { label:'0.2 – 0.4 (weak)',    min:0.2,  max:0.4,  count:0 },
-    { label:'< 0.2 (poor)',        min:-1,   max:0.2,  count:0 },
-  ];
-  rhos.forEach(r => { const b = buckets.find(b => r >= b.min && r < b.max); if(b) b.count++; });
-  const maxCount = Math.max(...buckets.map(b=>b.count), 1);
-
-  const rhoColor = mean >= 0.7 ? 'var(--green)' : mean >= 0.5 ? 'var(--amber)' : 'var(--red)';
+  const tkiBuckets  = bucketize(tkiRhos);
+  const rnkBuckets  = bucketize(rankingRhos);
+  const allCounts   = [...tkiBuckets.map(b => b.count), ...rnkBuckets.map(b => b.count), 1];
+  const maxCount    = Math.max(...allCounts);
 
   el.innerHTML = `
-    <div class="rho-summary">
-      <span class="rho-big" style="color:${rhoColor}">${mean.toFixed(2)}</span>
-      <span class="rho-lbl">mean ρ &nbsp;±${sd.toFixed(2)} SD &nbsp;(n=${rhos.length})</span>
+    <div class="rho-dual-summary">
+      ${summaryLine('vs TKI baseline',     'tki',     tkiRhos)}
+      ${summaryLine('vs Ranking baseline', 'ranking', rankingRhos)}
     </div>
-    <div class="rho-bars">
-      ${buckets.map(b => `
-        <div class="rho-row">
-          <span class="rho-bucket">${b.label}</span>
-          <div class="rho-bar-w"><div class="rho-bar" style="width:${Math.round(b.count/maxCount*100)}%"></div></div>
-          <span class="rho-n">${b.count}</span>
-        </div>`).join('')}
+    <div>
+      ${RHO_BUCKETS.map((_, i) => {
+        const tki = tkiBuckets[i];
+        const rnk = rnkBuckets[i];
+        const tkiBar = tkiRhos.length ? `
+          <div class="rho-pair-row">
+            <span class="rho-pair-lbl">TKI</span>
+            <div class="rho-bar-w"><div class="rho-bar tki" style="width:${Math.round(tki.count/maxCount*100)}%"></div></div>
+            <span class="rho-n">${tki.count}</span>
+          </div>` : '';
+        const rnkBar = rankingRhos.length ? `
+          <div class="rho-pair-row">
+            <span class="rho-pair-lbl">Rnk</span>
+            <div class="rho-bar-w"><div class="rho-bar ranking" style="width:${Math.round(rnk.count/maxCount*100)}%"></div></div>
+            <span class="rho-n">${rnk.count}</span>
+          </div>` : '';
+        return `
+          <div class="rho-bucket-row">
+            <span class="rho-bucket">${tki.label}</span>
+            <div class="rho-pair">${tkiBar}${rnkBar}</div>
+          </div>`;
+      }).join('')}
     </div>`;
 }
 
