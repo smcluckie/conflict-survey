@@ -228,9 +228,8 @@
       text-transform: uppercase; letter-spacing: 0.06em;
       padding: 0.15rem 0.45rem; border-radius: 4px;
     }
+    .badge-tki     { background: var(--surface-2); color: var(--text-2); }
     .badge-pit     { background: var(--accent-bg); color: var(--accent); }
-    .badge-hybrid  { background: var(--amber-bg);  color: var(--amber); }
-    .badge-slider  { background: var(--green-bg);  color: var(--green); }
     .badge-ranking { background: var(--surface-2); color: var(--text-3); }
     .rho-chip {
       display: inline-block; font-size: 0.72rem; font-weight: 700;
@@ -371,14 +370,6 @@
     <select class="field-select" id="sel-study" onchange="loadData()">
       <option value="">All studies</option>
     </select>
-    <span class="ctrl-label" style="margin-left:0.5rem">Instrument</span>
-    <select class="field-select" id="sel-inst" onchange="renderAll()">
-      <option value="">All</option>
-      <option value="pit">Pit</option>
-      <option value="hybrid">Hybrid</option>
-      <option value="slider">Slider</option>
-      <option value="ranking">Ranking</option>
-    </select>
     <button class="toggle-excl-btn" id="excl-toggle" onclick="toggleShowExcluded()" title="Show or hide excluded responses">
       <span id="excl-toggle-icon">👁</span> <span id="excl-toggle-lbl">Show excluded</span>
     </button>
@@ -389,18 +380,18 @@
   <div class="stat-grid" id="stat-grid">
     <div class="stat-card"><div class="stat-label">Total Responses</div><div class="stat-val" id="s-total">—</div><div class="stat-sub">all time</div></div>
     <div class="stat-card"><div class="stat-label">Avg Duration</div><div class="stat-val" id="s-dur">—</div><div class="stat-sub">minutes</div></div>
-    <div class="stat-card"><div class="stat-label">Bonus Rate</div><div class="stat-val" id="s-bonus">—</div><div class="stat-sub">completed optional section</div></div>
+    <div class="stat-card"><div class="stat-label">Feedback Rate</div><div class="stat-val" id="s-feedback">—</div><div class="stat-sub">left thumbs response</div></div>
     <div class="stat-card"><div class="stat-label">Mean ρ</div><div class="stat-val" id="s-rho">—</div><div class="stat-sub" id="s-rho-sub">vs TKI baseline</div></div>
   </div>
 
   <!-- Instrument breakdown -->
   <div class="section">
-    <div class="section-title">Responses by Instrument</div>
+    <div class="section-title">Participation by Instrument</div>
     <div class="stat-grid" id="inst-grid">
-      <div class="stat-card"><div class="stat-label">Pit</div><div class="stat-val" id="n-pit">—</div></div>
-      <div class="stat-card"><div class="stat-label">Hybrid</div><div class="stat-val" id="n-hybrid">—</div></div>
-      <div class="stat-card"><div class="stat-label">Slider</div><div class="stat-val" id="n-slider">—</div></div>
-      <div class="stat-card"><div class="stat-label">Ranking</div><div class="stat-val" id="n-ranking">—</div></div>
+      <div class="stat-card"><div class="stat-label">TKI</div><div class="stat-val" id="n-tki">—</div><div class="stat-sub">forced choice</div></div>
+      <div class="stat-card"><div class="stat-label">Pit</div><div class="stat-val" id="n-pit">—</div><div class="stat-sub">adaptive</div></div>
+      <div class="stat-card"><div class="stat-label">Ranking</div><div class="stat-val" id="n-ranking">—</div><div class="stat-sub">self-rank</div></div>
+      <div class="stat-card"><div class="stat-label">Thumbs</div><div class="stat-val" id="thumbs-summary">—</div><div class="stat-sub" id="thumbs-detail">👍 — · 👌 — · 👎 —</div></div>
     </div>
   </div>
 
@@ -623,10 +614,8 @@ function populateStudyFilter() {
 }
 
 function filtered(includeExcluded = false) {
-  const inst  = document.getElementById('sel-inst').value;
   const study = document.getElementById('sel-study').value;
   return ALL.filter(r =>
-    (!inst  || r.instrument === inst) &&
     (!study || r.study_id   === study) &&
     (includeExcluded || !r.excluded)
   );
@@ -646,6 +635,18 @@ function renderAll() {
 }
 
 // ── STATS ─────────────────────────────────────────────────────────────────────
+
+// Returns true if the row has data for the given instrument — checks
+// all_results (new shape) first, then legacy `instrument` column.
+function rowHasInstrument(row, key) {
+  if (row.all_results && typeof row.all_results === 'object' && row.all_results[key]) return true;
+  if (row.instrument === key) return true;
+  // Special: tki rows pre-multi-instrument refactor populated tki_scores even
+  // when tki was the primary, so check that too.
+  if (key === 'tki' && Array.isArray(row.tki_scores) && row.tki_scores.length) return true;
+  return false;
+}
+
 function renderStats(rows) {
   document.getElementById('s-total').textContent = rows.length;
 
@@ -654,9 +655,10 @@ function renderStats(rows) {
     ? (durations.reduce((a,b)=>a+b,0)/durations.length).toFixed(1)
     : '—';
 
-  const bonusN = rows.filter(r => r.bonus_engagement).length;
-  document.getElementById('s-bonus').textContent = rows.length
-    ? Math.round(bonusN / rows.length * 100) + '%'
+  // Feedback rate — % of rows with thumbs response (new) or legacy bonus_engagement
+  const feedbackN = rows.filter(r => r.feedback_thumbs || r.bonus_engagement).length;
+  document.getElementById('s-feedback').textContent = rows.length
+    ? Math.round(feedbackN / rows.length * 100) + '%'
     : '—';
 
   // Compute both baseline means. Headline = TKI baseline if it has data,
@@ -680,9 +682,19 @@ function renderStats(rows) {
     sRhoSub.textContent = 'no baselines available';
   }
 
-  ['pit','hybrid','slider','ranking'].forEach(inst => {
-    document.getElementById('n-'+inst).textContent = rows.filter(r => r.instrument === inst).length;
+  // Per-instrument participation (counts rows where each instrument ran)
+  ['tki','pit','ranking'].forEach(inst => {
+    document.getElementById('n-'+inst).textContent = rows.filter(r => rowHasInstrument(r, inst)).length;
   });
+
+  // Thumbs breakdown: 👍 / 👌 / 👎 counts. "Mixed" = side. Bonus_engagement
+  // (legacy) doesn't have thumbs equivalent, so we only count feedback_thumbs.
+  const thumbs = { up: 0, side: 0, down: 0 };
+  rows.forEach(r => { if (r.feedback_thumbs && thumbs[r.feedback_thumbs] != null) thumbs[r.feedback_thumbs]++; });
+  const totalThumbs = thumbs.up + thumbs.side + thumbs.down;
+  document.getElementById('thumbs-summary').textContent = totalThumbs || '—';
+  document.getElementById('thumbs-detail').textContent =
+    `👍 ${thumbs.up} · 👌 ${thumbs.side} · 👎 ${thumbs.down}`;
 }
 
 // ── SPEARMAN / RANK HELPERS ───────────────────────────────────────────────────
@@ -711,7 +723,7 @@ function getRanks(row, instrument) {
 }
 
 // Returns the test instrument key for a row — i.e. the non-baseline instrument
-// that ran (pit / hybrid / slider). Prefers all_results, falls back to the
+// that ran (pit). Prefers all_results, falls back to the
 // legacy `instrument` column. Returns null if only baselines ran.
 function getTestInstrument(row) {
   if (row.all_results && typeof row.all_results === 'object') {
@@ -861,10 +873,6 @@ function renderBias(rows) {
       if (!found) return null;
       // Pit: win_rate already 0-1
       if (r.instrument === 'pit') return found.win_rate ?? (found.wins / Math.max(found.matches, 1));
-      // Hybrid: avg/5 → 0-1
-      if (r.instrument === 'hybrid') return (found.avg ?? 0) / 5;
-      // Slider: total / 20 → 0-1 (each item contributes up to 1.0 across 20 items)
-      if (r.instrument === 'slider') return (found.total ?? 0) / 20;
       // Ranking: invert rank (5=best → 1.0, 1=worst → 0.0)
       if (r.instrument === 'ranking') return (5 - (found.rank ?? 3)) / 4;
       return null;
@@ -946,34 +954,64 @@ const PIT_MATCHUPS = [
   ['Rv','Md'],['Rv','Fx'],['Md','Fx'],
 ];
 
+// Helper: pull pit answers (matchup history) from a row, supporting both
+// new (all_results.pit.answers) and legacy (instrument === 'pit') shapes.
+function getPitAnswers(row) {
+  if (row.all_results?.pit?.answers && Array.isArray(row.all_results.pit.answers)) {
+    return row.all_results.pit.answers;
+  }
+  if (row.instrument === 'pit' && Array.isArray(row.instrument_answers)) {
+    return row.instrument_answers;
+  }
+  return null;
+}
+
+function getRankingAnswers(row) {
+  if (row.all_results?.ranking?.answers && Array.isArray(row.all_results.ranking.answers)) {
+    return row.all_results.ranking.answers;
+  }
+  if (row.instrument === 'ranking' && Array.isArray(row.instrument_answers)) {
+    return row.instrument_answers;
+  }
+  return null;
+}
+
 function renderRTInst(rows) {
   const el    = document.getElementById('rt-inst-panel');
   const title = document.getElementById('rt-inst-title');
-  const inst  = document.getElementById('sel-inst').value;
 
   if (!rows.length) { el.innerHTML = '<div class="empty">No data yet.</div>'; return; }
 
-  // Pit
-  if (inst === 'pit' || (!inst && rows.some(r => r.instrument === 'pit'))) {
-    title.textContent = 'Pit Matchup Response Times';
-    const pitRows = rows.filter(r => r.instrument === 'pit' && Array.isArray(r.instrument_answers));
-    // Build pair RT map from adaptive history (each entry has codeA, codeB, rt_ms)
-    const pairRTs = {};
-    pitRows.forEach(r => {
-      r.instrument_answers.forEach(h => {
-        if (!h.codeA || !h.codeB || !h.rt_ms) return;
-        const key = [h.codeA, h.codeB].sort().join('_');
-        if (!pairRTs[key]) pairRTs[key] = [];
-        pairRTs[key].push(h.rt_ms);
-      });
+  // Pit pair-level RTs (when present)
+  const pairRTs = {};
+  rows.forEach(r => {
+    const answers = getPitAnswers(r);
+    if (!answers) return;
+    answers.forEach(h => {
+      if (!h.codeA || !h.codeB || !h.rt_ms) return;
+      const key = [h.codeA, h.codeB].sort().join('_');
+      if (!pairRTs[key]) pairRTs[key] = [];
+      pairRTs[key].push(h.rt_ms);
     });
-    const items = Object.entries(pairRTs).map(([key, vals]) => {
-      const [a, b] = key.split('_');
-      return { label: `${STYLE_NAMES[a]} vs ${STYLE_NAMES[b]}`, mean: Math.round(vals.reduce((x,y)=>x+y,0)/vals.length), n: vals.length };
-    }).sort((a,b) => b.mean - a.mean);
-    if (!items.length) { el.innerHTML = '<div class="empty">No pit data yet.</div>'; return; }
-    const max = items[0].mean;
-    el.innerHTML = items.map(r => {
+  });
+
+  const pitItems = Object.entries(pairRTs).map(([key, vals]) => {
+    const [a, b] = key.split('_');
+    return { label: `${STYLE_NAMES[a]} vs ${STYLE_NAMES[b]}`, mean: Math.round(vals.reduce((x,y)=>x+y,0)/vals.length), n: vals.length };
+  }).sort((a,b) => b.mean - a.mean);
+
+  // Ranking single-completion RTs
+  const rankVals = rows.map(r => {
+    const ans = getRankingAnswers(r);
+    return ans?.[0]?.rt_ms;
+  }).filter(x => x > 0);
+
+  // Render — pit (full) + optional ranking footer
+  let html = '';
+  if (pitItems.length) {
+    title.textContent = 'Pit Matchup Response Times';
+    const max = pitItems[0].mean;
+    html += pitItems.map(r => {
       const cls = r.mean > 8000 ? 'very-slow' : r.mean > 5000 ? 'slow' : '';
       return `<div class="rt-row">
         <span class="rt-item">${r.label} <span style="color:var(--text-3);font-size:0.65rem">(n=${r.n})</span></span>
@@ -981,49 +1019,22 @@ function renderRTInst(rows) {
         <span class="rt-ms">${(r.mean/1000).toFixed(1)}s</span>
       </div>`;
     }).join('');
-    return;
+  } else {
+    title.textContent = 'Instrument Response Times';
   }
 
-  // Hybrid / Slider — item-level
-  if (inst === 'hybrid' || inst === 'slider') {
-    title.textContent = inst === 'hybrid' ? 'Hybrid Item Response Times' : 'Slider Item Response Times';
-    const instRows = rows.filter(r => r.instrument === inst && Array.isArray(r.instrument_answers));
-    const itemRTs = Array.from({length:20}, (_,i) => {
-      const vals = instRows.map(r => {
-        const ans = r.instrument_answers[i];
-        if (!ans) return null;
-        if (inst === 'hybrid') return ans.rt?.a ?? ans.rt?.b ?? null;
-        return ans.rt_ms ?? null;
-      }).filter(x => x > 0 && x < 60000);
-      return { i, mean: vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length) : null, n: vals.length };
-    }).filter(x => x.mean).sort((a,b) => b.mean - a.mean);
-    if (!itemRTs.length) { el.innerHTML = '<div class="empty">No data yet.</div>'; return; }
-    const max = itemRTs[0].mean;
-    el.innerHTML = itemRTs.map(r => {
-      const cls = r.mean > 8000 ? 'very-slow' : r.mean > 5000 ? 'slow' : '';
-      return `<div class="rt-row">
-        <span class="rt-item">Item ${r.i+1} — ${TKI_ITEMS[r.i]}</span>
-        <div class="rt-bar-w"><div class="rt-bar ${cls}" style="width:${Math.round(r.mean/max*100)}%"></div></div>
-        <span class="rt-ms">${(r.mean/1000).toFixed(1)}s</span>
-      </div>`;
-    }).join('');
-    return;
+  if (rankVals.length) {
+    const mean = Math.round(rankVals.reduce((a,b)=>a+b,0) / rankVals.length);
+    html += `<div style="margin-top:${pitItems.length ? '1rem' : '0'};padding-top:${pitItems.length ? '0.85rem' : '0'};${pitItems.length ? 'border-top:1px solid var(--border);' : ''}font-size:0.83rem;color:var(--text-2)">
+      Avg ranking completion time: <strong>${(mean/1000).toFixed(1)}s</strong> <span style="color:var(--text-3);font-size:0.7rem">(n=${rankVals.length})</span>
+    </div>`;
   }
 
-  // Ranking — just one overall RT
-  if (inst === 'ranking') {
-    title.textContent = 'Ranking Response Times';
-    const vals = rows.filter(r => r.instrument === 'ranking' && r.instrument_answers?.length)
-      .map(r => r.instrument_answers[0]?.rt_ms).filter(x => x > 0);
-    if (!vals.length) { el.innerHTML = '<div class="empty">No data yet.</div>'; return; }
-    const mean = Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
-    el.innerHTML = `<p style="font-size:0.88rem;color:var(--text-2)">Avg time to complete ranking: <strong>${(mean/1000).toFixed(1)}s</strong> (n=${vals.length})</p>`;
-    return;
+  if (!html) {
+    el.innerHTML = '<div class="empty">No RT data yet.</div>';
+  } else {
+    el.innerHTML = html;
   }
-
-  // Mixed instruments — show pit if present, otherwise generic
-  title.textContent = 'Instrument Response Times';
-  el.innerHTML = '<div class="empty" style="padding:1.5rem">Select a specific instrument above to see RT detail.</div>';
 }
 
 // ── TABLE ─────────────────────────────────────────────────────────────────────
@@ -1079,10 +1090,23 @@ function renderTable(rows) {
                 const val = s.win_rate!=null ? (s.win_rate*100).toFixed(0)+'%' : s.avg!=null ? s.avg+'avg' : s.total!=null ? s.total : `rank ${s.rank}`;
                 return `<div class="mini-row"><span class="mini-rank">${s.rank}</span><span class="mini-name">${s.style}</span><span class="mini-val">${val}</span></div>`;
               }).join('')}
-              ${r.bonus_engagement ? `<div style="margin-top:0.75rem"><div class="exp-col-title">Engagement</div>
-                ${Object.entries(r.bonus_engagement).filter(([k])=>k!=='open'&&k!=='at').map(([k,v])=>`<div class="mini-row"><span class="mini-name">${k}</span><span class="mini-val">${v}/7</span></div>`).join('')}
-                ${r.bonus_engagement.open ? `<div style="font-size:0.73rem;color:var(--text-2);margin-top:0.4rem;font-style:italic">"${r.bonus_engagement.open}"</div>` : ''}
-              </div>` : ''}
+              ${(() => {
+                const thumbsLabels = { up: '👍 Accurate', side: '👌 Mixed', down: '👎 Not really' };
+                const thumbsValue = r.feedback_thumbs;
+                if (thumbsValue && thumbsLabels[thumbsValue]) {
+                  return `<div style="margin-top:0.75rem"><div class="exp-col-title">Feedback</div>
+                    <div style="font-size:0.85rem;color:var(--text);font-weight:600">${thumbsLabels[thumbsValue]}</div>
+                  </div>`;
+                }
+                // Legacy bonus_engagement fallback for old rows
+                if (r.bonus_engagement) {
+                  return `<div style="margin-top:0.75rem"><div class="exp-col-title">Engagement (legacy)</div>
+                    ${Object.entries(r.bonus_engagement).filter(([k])=>k!=='open'&&k!=='at').map(([k,v])=>`<div class="mini-row"><span class="mini-name">${k}</span><span class="mini-val">${v}/7</span></div>`).join('')}
+                    ${r.bonus_engagement.open ? `<div style="font-size:0.73rem;color:var(--text-2);margin-top:0.4rem;font-style:italic">"${r.bonus_engagement.open}"</div>` : ''}
+                  </div>`;
+                }
+                return '';
+              })()}
             </div>
           </div>
         </td>
@@ -1187,18 +1211,18 @@ function runSim() {
   const threshold = parseFloat(document.getElementById('sim-slider').value);
   document.getElementById('sim-live-val').textContent = threshold.toFixed(2);
 
-  // Get pit rows from analysis set (excluded rows already filtered)
-  const pitRows = filtered(false).filter(r =>
-    r.instrument === 'pit' && Array.isArray(r.instrument_answers) && r.instrument_answers.length >= SIM_MIN
-  );
+  // Get pit-bearing rows from analysis set (works with all_results or legacy)
+  const pitRows = filtered(false)
+    .map(r => ({ row: r, answers: getPitAnswers(r) }))
+    .filter(p => p.answers && p.answers.length >= SIM_MIN);
 
   // Show/hide section
   document.getElementById('sim-section').style.display = pitRows.length ? '' : 'none';
   if (!pitRows.length) return;
 
   // Replay each participant at both the live threshold and the selected threshold
-  const simRounds  = pitRows.map(r => simReplayOne(r.instrument_answers, threshold));
-  const liveRounds = pitRows.map(r => simReplayOne(r.instrument_answers, LIVE_THRESHOLD));
+  const simRounds  = pitRows.map(p => simReplayOne(p.answers, threshold));
+  const liveRounds = pitRows.map(p => simReplayOne(p.answers, LIVE_THRESHOLD));
 
   const simMean  = simRounds.reduce((a,b)=>a+b,0)  / simRounds.length;
   const liveMean = liveRounds.reduce((a,b)=>a+b,0) / liveRounds.length;
@@ -1247,38 +1271,62 @@ function runSim() {
 // ── SAMPLE DATA (for dev/demo when Supabase not configured) ───────────────────
 function getSampleData() {
   const styles = ['Competing','Collaborating','Compromising','Avoiding','Accommodating'];
-  const instruments = ['pit','hybrid','slider','ranking'];
+  // Mirror the three production studies
+  const studyConfigs = [
+    { id: 'studyAT', insts: ['tki', 'pit'] },
+    { id: 'studyA',  insts: ['pit'] },
+    { id: 'studyT',  insts: ['tki'] },
+  ];
+  const thumbsValues = ['up','side','down'];
   const rows = [];
+
   for (let i = 0; i < 12; i++) {
+    const cfg = studyConfigs[i % studyConfigs.length];
     const tkiRanks = [...styles].sort(() => Math.random()-0.5);
-    const instRanks = [...tkiRanks].map((s,j) => j < 3 ? s : tkiRanks[Math.floor(Math.random()*5)]);
-    const inst = instruments[i % 4];
+    // Slightly perturb pit ranks vs TKI ranks for more realistic correlation
+    const pitRanks = [...tkiRanks].map((s,j) => j < 3 ? s : tkiRanks[Math.floor(Math.random()*5)]);
+    const rankingRanks = [...tkiRanks].map((s,j) => j < 4 ? s : tkiRanks[Math.floor(Math.random()*5)]);
+
+    const all_results = {};
+    if (cfg.insts.includes('tki')) {
+      all_results.tki = {
+        scores: tkiRanks.map((s,j) => ({ style:s, code:'XX', count: 8-j, rank: j+1 })),
+        answers: Array.from({length:20},(_,k)=>({item:k,choice:Math.random()>0.5?'a':'b',rt_ms:2000+Math.random()*8000})),
+      };
+    }
+    if (cfg.insts.includes('pit')) {
+      all_results.pit = {
+        scores: pitRanks.map((s,j) => ({ style:s, code:'XX', wins: 4-j, matches: 4, win_rate: (4-j)/4, rank: j+1 })),
+        answers: Array.from({length: 8+Math.floor(Math.random()*7)}, (_,k) => ({
+          round: k+1, codeA: ['As','Cp','Rv','Md','Fx'][k%5], codeB: ['Cp','Rv','Md','Fx','As'][k%5],
+          winner: Math.random()>0.5?'As':'Cp', rt_ms: 2000+Math.random()*9000
+        })),
+      };
+    }
+    // Ranking always runs
+    all_results.ranking = {
+      scores: rankingRanks.map((s,j) => ({ style:s, code:'XX', rank: j+1 })),
+      answers: [{ rt_ms: 8000+Math.random()*15000 }],
+    };
+
+    const primary = cfg.insts[0] || 'ranking';
     rows.push({
       session_id: 'demo-' + i,
       prolific_id: '5f3c' + Math.random().toString(36).slice(2,8),
-      study_id: i < 6 ? 'study_001' : 'study_002',
-      instrument: inst,
+      study_id: cfg.id,
+      config_name: cfg.id,
+      // Legacy fields populated for backwards-compat
+      instrument: primary,
+      tki_scores:         all_results.tki?.scores || null,
+      tki_answers:        all_results.tki?.answers || null,
+      instrument_scores:  all_results[primary]?.scores || null,
+      instrument_answers: all_results[primary]?.answers || null,
+      // Canonical
+      all_results,
+      instruments_run: Object.keys(all_results),
       completed_at: new Date(Date.now() - i * 3600000).toISOString(),
-      total_duration_ms: (8 + Math.random()*10) * 60000,
-      tki_scores: tkiRanks.map((s,j) => ({ style:s, code:'XX', count: 8-j, rank: j+1 })),
-      instrument_scores: tkiRanks.map((s,j) => {
-        const rank = j + (Math.random() > 0.7 ? 1 : 0);
-        return inst === 'pit'
-          ? { style:s, code:'XX', wins: 4-j, matches: 4, win_rate: (4-j)/4, rank: j+1 }
-          : inst === 'hybrid'
-          ? { style:s, code:'XX', total: (5-j)*3, count:8, avg: (5-j)*0.6, rank: j+1 }
-          : inst === 'slider'
-          ? { style:s, code:'XX', total: 20-j*3, rank: j+1 }
-          : { style:s, code:'XX', rank: j+1, rt_ms: 8000 };
-      }),
-      tki_answers: Array.from({length:20},(_,k)=>({item:k,choice:Math.random()>0.5?'a':'b',rt_ms:2000+Math.random()*8000})),
-      instrument_answers: inst === 'pit'
-        ? Array.from({length: 8+Math.floor(Math.random()*7)}, (_,k) => ({
-            round: k+1, codeA: ['As','Cp','Rv','Md','Fx'][k%5], codeB: ['Cp','Rv','Md','Fx','As'][k%5],
-            winner: Math.random()>0.5?'As':'Cp', rt_ms: 2000+Math.random()*9000
-          }))
-        : Array.from({length:20},(_,k)=>({a:Math.ceil(Math.random()*5),b:Math.ceil(Math.random()*5),rt:{a:2000+Math.random()*8000}})),
-      bonus_engagement: Math.random()>0.6 ? { accuracy:5, surprise:3, useful:6, enjoyment:5, trust:4, open:'Felt accurate overall.', at: new Date().toISOString() } : null,
+      total_duration_ms: (4 + Math.random()*5) * 60000,
+      feedback_thumbs: Math.random() > 0.4 ? thumbsValues[Math.floor(Math.random()*3)] : null,
     });
   }
   return rows;
