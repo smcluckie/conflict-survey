@@ -179,16 +179,37 @@
     .rank-list { margin: 1rem 0; list-style: none; }
     .rank-item {
       background: var(--surface); border: 1.5px solid var(--border);
-      border-radius: var(--radius); padding: 0.95rem 1.15rem; margin-bottom: 0.5rem;
-      cursor: grab; display: flex; align-items: center; gap: 0.9rem;
+      border-radius: var(--radius); padding: 0.95rem 1rem; margin-bottom: 0.5rem;
+      display: flex; align-items: center; gap: 0.7rem;
       transition: all 0.14s var(--ease); user-select: none; box-shadow: var(--shadow-sm);
     }
-    .rank-item:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    /* Drag affordances apply only when actively dragging on desktop */
     .rank-item.dragging  { opacity: 0.45; border-style: dashed; cursor: grabbing; transform: scale(1.02); }
     .rank-item.drag-over { border-color: var(--accent); background: var(--accent-bg); }
-    .rank-n     { font-size: 0.95rem; font-weight: 800; color: var(--accent); min-width: 22px; }
-    .rank-grip  { color: var(--text-3); font-size: 0.9rem; }
-    .rank-blurb { font-size: 0.85rem; color: var(--text); line-height: 1.5; }
+    @keyframes rank-flash {
+      0%   { background: var(--accent-bg); border-color: var(--accent); box-shadow: 0 0 0 3px rgba(91,79,232,0.18); }
+      100% { background: var(--surface); border-color: var(--border); box-shadow: var(--shadow-sm); }
+    }
+    .rank-item.flash { animation: rank-flash 0.55s ease-out; }
+    .rank-n     { font-size: 0.95rem; font-weight: 800; color: var(--accent); min-width: 22px; flex-shrink: 0; }
+    .rank-blurb { font-size: 0.85rem; color: var(--text); line-height: 1.5; flex: 1; }
+    .rank-arrows { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+    .rank-arrow {
+      width: 36px; height: 28px; border: 1.5px solid var(--border); background: var(--surface-2);
+      border-radius: 7px; cursor: pointer; font-size: 0.78rem; color: var(--text-2);
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.12s; padding: 0; font-family: var(--font);
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .rank-arrow:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+    .rank-arrow:active:not(:disabled) { transform: scale(0.92); }
+    .rank-arrow:disabled { opacity: 0.25; cursor: default; }
+    /* Desktop: cursor hint that whole row is draggable */
+    @media (hover: hover) and (pointer: fine) {
+      .rank-item { cursor: grab; }
+      .rank-item:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    }
 
     /* ══ PIT ═════════════════════════════════════════════════════════════════ */
     .pit-wrap { margin: 1rem 0; }
@@ -444,7 +465,7 @@
 <div class="screen" id="screen-ranking">
   <span class="eyebrow">Part X of Y</span>
   <h2>Rank these descriptions</h2>
-  <p style="font-size:0.9rem">Drag to reorder — <strong>most like you</strong> at the top, <strong>least like you</strong> at the bottom.</p>
+  <p style="font-size:0.9rem">Tap arrows to reorder (or drag on desktop) — <strong>most like you</strong> at the top, <strong>least like you</strong> at the bottom.</p>
   <ul class="rank-list" id="rank-list"></ul>
   <div class="btn-row end"><button class="btn btn-primary" onclick="finishRanking()">Submit →</button></div>
 </div>
@@ -942,14 +963,63 @@ function buildRanking() {
   }
   S.rOrder = codes;
 
-  const ul=document.getElementById('rank-list'); ul.innerHTML='';
-  S.rOrder.forEach((c,i)=>{
-    const s=RANK_STYLES.find(x=>x.c===c), li=document.createElement('li');
-    li.className='rank-item'; li.dataset.c=c; li.draggable=true;
-    li.innerHTML=`<span class="rank-n">${i+1}</span><span class="rank-grip">⠿</span><div><div class="rank-blurb">${s.b}</div></div>`;
-    li.addEventListener('dragstart',ds); li.addEventListener('dragover',dov); li.addEventListener('drop',dd); li.addEventListener('dragend',de);
+  const ul = document.getElementById('rank-list');
+  ul.innerHTML = '';
+  S.rOrder.forEach((c, i) => {
+    const s = RANK_STYLES.find(x => x.c === c);
+    const li = document.createElement('li');
+    li.className = 'rank-item';
+    li.dataset.c = c;
+    li.draggable = true;
+    li.innerHTML = `
+      <span class="rank-n">${i+1}</span>
+      <span class="rank-blurb">${s.b}</span>
+      <span class="rank-arrows">
+        <button class="rank-arrow rank-up"   aria-label="Move up"   onclick="moveRank(this, -1)">▲</button>
+        <button class="rank-arrow rank-down" aria-label="Move down" onclick="moveRank(this, +1)">▼</button>
+      </span>`;
+    li.addEventListener('dragstart', ds);
+    li.addEventListener('dragover',  dov);
+    li.addEventListener('drop',      dd);
+    li.addEventListener('dragend',   de);
     ul.appendChild(li);
   });
+  refreshRankUI();
+}
+
+// Recompute the visible rank numbers and disabled state of the up/down
+// buttons for every card. Call after any reorder (drag or tap).
+function refreshRankUI() {
+  const items = [...document.querySelectorAll('#rank-list .rank-item')];
+  items.forEach((li, i) => {
+    li.querySelector('.rank-n').textContent = i + 1;
+    li.querySelector('.rank-up').disabled   = (i === 0);
+    li.querySelector('.rank-down').disabled = (i === items.length - 1);
+    li.classList.remove('drag-over');
+  });
+  S.rOrder = items.map(li => li.dataset.c);
+}
+
+// Tap-to-move: swap the row containing `btn` with its neighbor in the
+// given direction. dir = -1 (up) or +1 (down).
+function moveRank(btn, dir) {
+  const li    = btn.closest('.rank-item');
+  const ul    = li.parentNode;
+  const items = [...ul.children];
+  const idx   = items.indexOf(li);
+  const targetIdx = idx + dir;
+  if (targetIdx < 0 || targetIdx >= items.length) return;
+
+  if (dir < 0) ul.insertBefore(li, items[targetIdx]);
+  else         ul.insertBefore(li, items[targetIdx].nextSibling);
+
+  refreshRankUI();
+  // Brief flash so the user sees what just moved (instead of having to
+  // hunt for the row in its new position).
+  li.classList.remove('flash');
+  // eslint-disable-next-line no-unused-expressions
+  void li.offsetWidth; // restart animation
+  li.classList.add('flash');
 }
 let _ds=null;
 function ds(e){_ds=this;this.classList.add('dragging');e.dataTransfer.effectAllowed='move';}
@@ -960,8 +1030,7 @@ function dd(e){
     const ul=this.parentNode,its=[...ul.querySelectorAll('.rank-item')];
     const fi=its.indexOf(_ds),ti=its.indexOf(this);
     if(fi<ti)ul.insertBefore(_ds,this.nextSibling);else ul.insertBefore(_ds,this);
-    [...ul.querySelectorAll('.rank-item')].forEach((li,i)=>{li.querySelector('.rank-n').textContent=i+1;li.classList.remove('drag-over');});
-    S.rOrder=[...ul.querySelectorAll('.rank-item')].map(li=>li.dataset.c);
+    refreshRankUI();
   }
 }
 function de(){this.classList.remove('dragging');document.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over'));}
