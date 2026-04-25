@@ -386,7 +386,7 @@
 <div class="screen active" id="screen-splash">
   <h1 id="splash-title">Welcome to our study!</h1>
   <div id="splash-body">
-    <p>You will be presented with up to 40 multiple choice questions on how you prefer to deal with conflict, disagreement, and negotiation strategies. When answering, please think about how you typically deal with these kinds of situations and answer as honestly as you can. Many questions will look the same, but that is by design. The whole process should take around 8 minutes to complete.</p>
+    <p>You will be presented with up to 21 multiple choice questions on how you prefer to deal with conflict, disagreement, and negotiation strategies. When answering, please think about how you typically deal with these kinds of situations and answer as honestly as you can. Many questions will look the same, but that is by design. The whole process should take around 4 minutes to complete.</p>
     <p><strong>This is not a test, there are no right answers.</strong></p>
     <p>Your answers are completely anonymous beyond the collection of your Prolific ID for payment verification purposes. Your participation is voluntary, but you must complete every question in order to receive payment.</p>
   </div>
@@ -760,11 +760,11 @@ let PS = null;
 // PLACEHOLDER CONTENT — first-pass behavioral descriptions. Refine these as
 // the ranking instrument is validated.
 const RANK_STYLES = [
-  { c:'As', b:'When something matters to me, I make my case clearly and directly. I\'m comfortable holding my ground when I think I\'m right, even if it creates friction.' },
-  { c:'Cp', b:'I\'d rather slow down and dig into what\'s really going on for both sides than rush to a decision. I\'m willing to put in the work for an answer that genuinely fits everyone.' },
-  { c:'Md', b:'My instinct is to look for a fair middle ground — somewhere both sides give a little, nobody walks away empty-handed, and we can move on.' },
-  { c:'Rv', b:'When tension comes up, I tend to step back and give it space. A lot of disagreements settle themselves if you don\'t feed them, and I\'d rather not get pulled in.' },
-  { c:'Fx', b:'I usually weigh the relationship more heavily than the specific issue. If the other person cares more, I\'m generally fine adjusting to keep things smooth.' },
+  { c:'As', b:'I assert my position firmly, even when it creates friction. When something matters to me, I push for what I think is right and don\'t back down easily.' },
+  { c:'Cp', b:'I work through disagreement to find a solution that satisfies everyone. I dig into what\'s really going on and stay engaged until things feel resolved.' },
+  { c:'Md', b:'I look for middle ground where both sides give a little and gain a little. I focus on fair trades and workable resolutions over getting everything I want.' },
+  { c:'Rv', b:'I step back from conflict rather than engage directly. I pick my battles carefully and often let things settle on their own.' },
+  { c:'Fx', b:'I yield to the other person\'s needs, even at the cost of my own. I prioritize the other person and am willing to give ground to keep things smooth.' },
 ];
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
@@ -790,11 +790,17 @@ const S = {
 // Splash text is baked into the HTML at the top of the body (search "EDIT
 // SPLASH TEXT HERE"). To change splash, edit this file directly.
 const STUDY = {
-  name:        'TKI + Adaptive + Ranking',     // human-readable label saved with each response
-  instruments: ['tki', 'pit'], // ranking is appended automatically; do not include here
+  name:        'Adaptive + Ranking',     // human-readable label saved with each response
+  instruments: ['pit'], // ranking is appended automatically; do not include here
   // Eyebrow labels per screen. Total parts excludes splash; "Part N of M" is
   // counted from the prolific page onwards.
-  parts: { prolific: 'Part 1 of 4', tki: 'Part 2 of 4', pit: 'Part 3 of 4', ranking: 'Part 4 of 4' },
+  parts: { prolific: 'Part 1 of 3', pit: 'Part 2 of 3', ranking: 'Part 3 of 3' },
+  // Whether to show the "How your other answers compared" block on the
+  // results page. Useful only when there's a non-ranking secondary instrument
+  // worth comparing — e.g. studyAT has TKI primary + Pit + Ranking. In
+  // studyA / studyT, the only "other" is the participant's own ranking,
+  // which they just did, so we hide the section.
+  showComparison: false,
 };
 
 // Paint Part X of N labels into screens. Reads STUDY.parts; safe to call
@@ -1344,7 +1350,13 @@ function renderResults() {
   container.innerHTML = html;
 
   // ── Comparison block — show every other instrument that ran ──
+  // Suppressed for studies where the only "other" is the ranking the
+  // participant just did (studyA / studyT). See STUDY.showComparison.
   const compareBox = document.getElementById('inst-compare');
+  if (!STUDY.showComparison) {
+    compareBox.style.display = 'none';
+    return;
+  }
   const others = Object.keys(S.results).filter(k => k !== primaryKey);
   if (!others.length) {
     compareBox.style.display = 'none';
