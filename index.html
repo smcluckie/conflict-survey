@@ -438,10 +438,8 @@
 
 <!-- ═══════════════════════ SPLASH ═══════════════════════════════════════════ -->
 <div class="screen active" id="screen-splash">
-  <h1>Welcome to our study!</h1>
-  <p>You will be presented with up to 40 multiple choice questions on how you prefer to deal with conflict, disagreement, and negotiation strategies. When answering, please think about how you typically deal with these kinds of situations and answer as honestly as you can. Many questions will look the same, but that is by design. This will take about 8 minutes to complete.</p>
-  <p><strong>This is not a test, there are no right answers.</strong></p>
-  <p>Your answers are completely anonymous beyond the collection of your Prolific ID for payment verification purposes. Your participation is voluntary, but you must complete every question in order to receive payment.</p>
+  <h1 id="splash-title">Welcome to our study!</h1>
+  <div id="splash-body"></div>
   <div class="btn-row">
     <button class="btn btn-primary btn-lg" onclick="goTo('prolific')">Begin →</button>
   </div>
@@ -863,17 +861,65 @@ const ENG_Q = [
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 const S = {
-  pid:'', cc:'', study: window.CFG.studyId, inst: null,
+  pid:'', cc:'', study: window.CFG.studyId,
   sid: crypto.randomUUID(),
   tkiIdx:0, tkiA:[], tkiT:0,
   iA:[], iIdx:0, iT:0,
   rOrder: RANK_STYLES.map(s=>s.c),
   tkiScores:null, iScores:null,
   engA:{}, t0:0,
+  // Multi-instrument flow:
+  queue:        [],   // ordered list of instruments still to run (e.g., ['pit','ranking'])
+  currentInst:  null, // the instrument currently running
+  results:      {},   // { pit: {answers, scores}, hybrid: {...}, ranking: {...} } as each completes
+  config:       null, // active study_config row from Supabase
 };
 
+// ── CONFIG LOADER ─────────────────────────────────────────────────────────────
+async function loadConfig() {
+  // Defaults if no config available (dev mode or first-run)
+  const defaults = {
+    name: 'Default',
+    instruments: ['pit'],
+    splash_title: 'Welcome to our study!',
+    splash_body: 'You will be presented with multiple choice questions on how you prefer to deal with conflict, disagreement, and negotiation strategies. When answering, please think about how you typically deal with these kinds of situations and answer as honestly as you can. Many questions will look the same, but that is by design.<br><br><strong>This is not a test, there are no right answers.</strong><br><br>Your answers are completely anonymous beyond the collection of your Prolific ID for payment verification purposes. Your participation is voluntary, but you must complete every question in order to receive payment.',
+    prolific_code: window.CFG.completionCode,
+  };
+
+  if (window.location.protocol === 'file:') {
+    return defaults;
+  }
+
+  try {
+    const r = await fetch('/api/study-config');
+    if (!r.ok) return defaults;
+    return await r.json();
+  } catch(e) {
+    console.warn('[Survey] Config load error:', e);
+    return defaults;
+  }
+}
+
+function applyConfig(cfg) {
+  S.config = cfg;
+  // Build the instrument queue: configured instruments + ranking always last
+  const instruments = Array.isArray(cfg.instruments) ? cfg.instruments.slice() : [];
+  if (!instruments.includes('ranking')) instruments.push('ranking');
+  S.queue = instruments;
+  // Render splash content
+  document.getElementById('splash-title').textContent = cfg.splash_title || 'Welcome to our study!';
+  document.getElementById('splash-body').innerHTML   = '<p>' + (cfg.splash_body || '').replace(/\n\n/g, '</p><p>') + '</p>';
+  // Override completion code if config has one
+  if (cfg.prolific_code) {
+    S.cc = S.cc || cfg.prolific_code;
+    if (window.CFG.prolificRedirect) {
+      window.CFG.prolificRedirect = window.CFG.prolificRedirect.replace(/cc=[^&]*/, 'cc=' + cfg.prolific_code);
+    }
+  }
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
   initTheme();
   initLayout();
   const p = new URLSearchParams(window.location.search);
@@ -886,11 +932,13 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   S.cc    = p.get(window.CFG.ccParam) || window.CFG.completionCode || '';
   S.study = p.get('sid') || window.CFG.studyId;
-  const inst = p.get(window.CFG.instrumentParam);
-  if (inst && ['ranking','pit','hybrid','slider'].includes(inst)) S.inst = inst;
   S.t0 = Date.now();
   history.replaceState({ screen:'splash' }, '', window.location.href);
   buildEng();
+
+  // Load active study config and apply it
+  const cfg = await loadConfig();
+  applyConfig(cfg);
 });
 
 // ── PROLIFIC ──────────────────────────────────────────────────────────────────
@@ -898,7 +946,37 @@ function confirmProlific() {
   const v = document.getElementById('pid-inp').value.trim();
   const e = document.getElementById('pid-err');
   if (!v) { e.style.display='block'; return; }
-  e.style.display='none'; S.pid=v; goTo('tki-intro');
+  e.style.display='none'; S.pid=v;
+  nextInstrument();
+}
+
+// ── INSTRUMENT QUEUE ──────────────────────────────────────────────────────────
+function nextInstrument() {
+  if (!S.queue.length) {
+    completeSurvey();
+    return;
+  }
+  const next = S.queue.shift();
+  S.currentInst = next;
+  S.iA = []; S.iIdx = 0; S.iT = Date.now();
+
+  if (next === 'tki')      { showScreen('tki-intro'); return; }
+  if (next === 'pit')      { startPit(); return; }
+  if (next === 'hybrid')   { shuffleHybrid(); renderHyb(0); showScreen('hybrid'); return; }
+  if (next === 'slider')   { renderSl(0); showScreen('slider'); return; }
+  if (next === 'ranking')  { buildRanking(); showScreen('ranking'); return; }
+
+  // Unknown instrument — skip
+  console.warn('[Survey] Unknown instrument:', next);
+  nextInstrument();
+}
+
+function recordInstResult(name) {
+  S.results[name] = {
+    answers: S.iA,
+    scores:  S.iScores,
+    duration_ms: Date.now() - S.iT,
+  };
 }
 
 // ── TKI ───────────────────────────────────────────────────────────────────────
@@ -936,7 +1014,8 @@ function tkiDone() {
   const rt=S.tkiA._rt||{};
   S.tkiA=TKI.map((it,i)=>({item:i,choice:S.tkiA[i]||null,rt_ms:rt[i]||null,style:S.tkiA[i]?CM[it[S.tkiA[i]].c]:null}));
   S.tkiScores=scoreTKI();
-  if(S.inst) startInst(); else goTo('instrument-select');
+  S.results.tki = { answers: S.tkiA, scores: S.tkiScores, duration_ms: Date.now() - S.iT };
+  nextInstrument();
 }
 
 function scoreTKI() {
@@ -992,7 +1071,9 @@ function de(){this.classList.remove('dragging');document.querySelectorAll('.drag
 
 function finishRanking() {
   S.iA=S.rOrder.map((c,i)=>({style:CM[c],code:c,rank:i+1,rt_ms:Date.now()-S.iT}));
-  S.iScores=S.iA; completeSurvey();
+  S.iScores=S.iA;
+  recordInstResult('ranking');
+  nextInstrument();
 }
 
 // ── PIT — ADAPTIVE ENGINE ─────────────────────────────────────────────────────
@@ -1166,7 +1247,8 @@ function scorePit() {
     }))
     .sort((a,b) => b.win_rate - a.win_rate || b.wins - a.wins)
     .map((s,i) => ({ ...s, rank: i+1 }));
-  completeSurvey();
+  recordInstResult('pit');
+  nextInstrument();
 }
 
 function startPit() {
@@ -1277,7 +1359,8 @@ function scoreHyb() {
     .map(([c, t]) => ({ style: CM[c], code: c, total: t, count: cnt[c], avg: cnt[c] ? +(t/cnt[c]).toFixed(2) : 0 }))
     .sort((a, b) => b.total - a.total)
     .map((s, i) => ({ ...s, rank: i+1 }));
-  completeSurvey();
+  recordInstResult('hybrid');
+  nextInstrument();
 }
 // ── SLIDER ────────────────────────────────────────────────────────────────────
 function slFreq(val, styleA, styleB) {
@@ -1324,7 +1407,8 @@ function scoreSl(){
   const tot={As:0,Cp:0,Rv:0,Md:0,Fx:0};
   S.iA.forEach((a,i)=>{if(a==null)return;const it=TKI[i],v=a.value/100;tot[it.a.c]+=(1-v);tot[it.b.c]+=v;});
   S.iScores=Object.entries(tot).map(([c,t])=>({style:CM[c],code:c,total:+t.toFixed(2)})).sort((a,b)=>b.total-a.total).map((s,i)=>({...s,rank:i+1}));
-  completeSurvey();
+  recordInstResult('slider');
+  nextInstrument();
 }
 
 // ── SAVE ──────────────────────────────────────────────────────────────────────
@@ -1340,22 +1424,34 @@ function showComplete() {
   document.getElementById('prolific-link').href = window.CFG.prolificRedirect;
 }
 async function save() {
+  // For backward compatibility with existing admin queries, populate the
+  // legacy single-instrument fields with whichever non-ranking instrument
+  // ran (or ranking if it was the only one).
+  const runOrder = Object.keys(S.results);
+  const primary  = runOrder.find(k => k !== 'ranking') || 'ranking';
+  const legacyTki     = S.results.tki || null;
+
   const payload = {
     session_id:         S.sid,
     prolific_id:        S.pid,
     completion_code:    S.cc,
     study_id:           S.study,
-    instrument:         S.inst,
-    tki_answers:        S.tkiA,
-    instrument_answers: S.iA,
-    tki_scores:         S.tkiScores,
-    instrument_scores:  S.iScores,
+    config_name:        S.config?.name || null,
+    config_id:          S.config?.id   || null,
+    // Legacy fields — keep populated so existing admin queries still work
+    instrument:         primary,
+    tki_answers:        legacyTki?.answers || null,
+    tki_scores:         legacyTki?.scores  || null,
+    instrument_answers: S.results[primary]?.answers || null,
+    instrument_scores:  S.results[primary]?.scores  || null,
+    // New: full results object across all instruments that ran
+    all_results:        S.results,
+    instruments_run:    runOrder,
     total_duration_ms:  Date.now() - S.t0,
     completed_at:       new Date().toISOString(),
   };
   // Local backup
   try { localStorage.setItem('cf_' + S.sid, JSON.stringify(payload)); } catch(e) {}
-  // Dev mode — skip API call when running locally as a file
   if (window.location.protocol === 'file:') { console.warn('[Survey] Dev mode — skipping save.'); return; }
   try {
     const r = await fetch('/api/save-response', {
