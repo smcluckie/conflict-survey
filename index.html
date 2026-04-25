@@ -168,8 +168,11 @@
       transition: all 0.14s var(--ease);
       display: flex; align-items: flex-start; gap: 0.9rem; margin-bottom: 0.65rem;
       box-shadow: var(--shadow-sm);
+      -webkit-tap-highlight-color: transparent;
     }
-    .choice:hover  { border-color: var(--accent); background: var(--accent-bg); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    @media (hover: hover) and (pointer: fine) {
+      .choice:hover { border-color: var(--accent); background: var(--accent-bg); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    }
     .choice.sel    { border-color: var(--accent); background: var(--accent-bg); box-shadow: 0 0 0 3px rgba(91,79,232,0.13), var(--shadow-sm); }
     .choice.unsel  { opacity: 0.3; }
     .choice-ltr    { font-size: 0.72rem; font-weight: 800; color: var(--accent); min-width: 18px; padding-top: 3px; letter-spacing: 0.03em; }
@@ -225,8 +228,11 @@
       transition: border-color 0.2s, background 0.2s, transform 0.18s, opacity 0.18s;
       box-shadow: var(--shadow-sm);
       display: grid; grid-row: span 3; grid-template-rows: subgrid;
+      -webkit-tap-highlight-color: transparent;
     }
-    .pit-opt:hover { border-color: var(--accent); background: var(--accent-bg); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    @media (hover: hover) and (pointer: fine) {
+      .pit-opt:hover { border-color: var(--accent); background: var(--accent-bg); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    }
     .pit-opt.sel     { border-color: var(--accent); background: var(--accent-bg); box-shadow: 0 0 0 3px rgba(91,79,232,0.13), var(--shadow-sm); }
     .pit-opt.winning { border-color: var(--accent); background: var(--accent-bg); box-shadow: 0 0 0 3px rgba(91,79,232,0.18), var(--shadow-md); }
     .pit-opt.losing  { opacity: 0.28; transform: scale(0.97); }
