@@ -145,6 +145,7 @@
 
     /* ── STAT CARDS ─────────────────────────────────────────────────────── */
     .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 2rem; }
+    .stat-grid-5 { grid-template-columns: repeat(5, 1fr); }
     .stat-card {
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 1.1rem 1.25rem;
@@ -331,11 +332,54 @@
       display: flex; gap: 1rem; margin-bottom: 0.85rem;
     }
 
+    /* ── AGREEMENT PANEL ─────────────────────────────────────────────────── */
+    .agreement-summary {
+      display: flex; flex-direction: column; gap: 0.45rem;
+      margin-bottom: 1.25rem; padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .agreement-summary-row {
+      display: flex; align-items: baseline; gap: 0.6rem;
+      font-size: 0.78rem; color: var(--text-2);
+    }
+    .agreement-summary-lbl { font-weight: 600; min-width: 175px; color: var(--text-3); }
+    .agreement-summary-val { font-weight: 700; color: var(--accent); }
+    .agreement-summary-val.ranking { color: var(--amber); }
+    .agreement-summary-meta { color: var(--text-3); font-size: 0.7rem; }
+    .agreement-table {
+      display: grid; grid-template-columns: 110px 1fr 1fr;
+      gap: 0.4rem 1rem; font-size: 0.78rem;
+    }
+    .agreement-table .ag-header {
+      font-size: 0.65rem; font-weight: 800; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: 0.08em;
+      padding-bottom: 0.45rem; border-bottom: 1px solid var(--border);
+      margin-bottom: 0.25rem;
+    }
+    .agreement-table .ag-rank-lbl { font-weight: 600; color: var(--text-2); }
+    .agreement-table .ag-rank-lbl em { color: var(--text-3); font-style: normal; font-weight: 500; font-size: 0.7rem; }
+    .agreement-table .ag-cell {
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+    .agreement-table .ag-cell.empty { color: var(--text-3); font-size: 0.72rem; }
+    .agreement-table .ag-bar-w {
+      flex: 1; height: 6px; background: var(--surface-2);
+      border-radius: 3px; overflow: hidden;
+    }
+    .agreement-table .ag-bar { height: 6px; border-radius: 3px; transition: width 0.6s; }
+    .agreement-table .ag-bar.tki     { background: var(--accent); }
+    .agreement-table .ag-bar.ranking { background: var(--amber); }
+    .agreement-table .ag-pct {
+      font-weight: 700; color: var(--text); min-width: 36px; text-align: right;
+    }
+    .agreement-table .ag-n  { color: var(--text-3); font-size: 0.65rem; }
+
     /* ── RESPONSIVE ─────────────────────────────────────────────────────── */
     @media (max-width: 700px) {
-      .stat-grid { grid-template-columns: 1fr 1fr; }
-      .two-col   { grid-template-columns: 1fr; }
-      .exp-inner { grid-template-columns: 1fr; }
+      .stat-grid    { grid-template-columns: 1fr 1fr; }
+      .stat-grid-5  { grid-template-columns: 1fr 1fr; }
+      .two-col      { grid-template-columns: 1fr; }
+      .exp-inner    { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -377,11 +421,12 @@
   </div>
 
   <!-- Overview stats -->
-  <div class="stat-grid" id="stat-grid">
+  <div class="stat-grid stat-grid-5" id="stat-grid">
     <div class="stat-card"><div class="stat-label">Total Responses</div><div class="stat-val" id="s-total">—</div><div class="stat-sub">all time</div></div>
     <div class="stat-card"><div class="stat-label">Avg Duration</div><div class="stat-val" id="s-dur">—</div><div class="stat-sub">minutes</div></div>
     <div class="stat-card"><div class="stat-label">Feedback Rate</div><div class="stat-val" id="s-feedback">—</div><div class="stat-sub">left thumbs response</div></div>
     <div class="stat-card"><div class="stat-label">Mean ρ</div><div class="stat-val" id="s-rho">—</div><div class="stat-sub" id="s-rho-sub">vs TKI baseline</div></div>
+    <div class="stat-card"><div class="stat-label">Avg Pit Rounds</div><div class="stat-val" id="s-pit-rounds">—</div><div class="stat-sub" id="s-pit-rounds-sub">to converge</div></div>
   </div>
 
   <!-- Instrument breakdown -->
@@ -416,6 +461,15 @@
       <div id="bias-panel"><div class="empty">No data yet.</div></div>
     </div>
 
+  </div>
+
+  <!-- Per-rank agreement -->
+  <div class="section">
+    <div class="panel">
+      <div class="panel-title">Rank Agreement — by Position</div>
+      <div class="panel-sub" style="margin-bottom:1rem;font-size:0.73rem;color:var(--text-3)">For each rank position, how often the test instrument's pick matches the baseline's pick. Expect strong agreement on rank 1 (primary) and rank 5 (least), softer in the middle.</div>
+      <div id="agreement-panel"><div class="empty">No data yet.</div></div>
+    </div>
   </div>
 
   <!-- Response times -->
@@ -627,6 +681,7 @@ function renderAll() {
   const tableRows    = filtered(showExcluded);   // respects toggle
   renderStats(analysisRows);
   renderRho(analysisRows);
+  renderAgreement(analysisRows);
   renderBias(analysisRows);
   renderRTTKI(analysisRows);
   renderRTInst(analysisRows);
@@ -695,6 +750,29 @@ function renderStats(rows) {
   document.getElementById('thumbs-summary').textContent = totalThumbs || '—';
   document.getElementById('thumbs-detail').textContent =
     `👍 ${thumbs.up} · 👌 ${thumbs.side} · 👎 ${thumbs.down}`;
+
+  // Avg Pit rounds — how many matchups before convergence per participant.
+  // PIT_MAX is the cap (20). "% hit cap" tells you whether the algorithm is
+  // converging or just timing out.
+  const pitRoundCounts = rows.map(r => {
+    const ans = getPitAnswers(r);
+    return ans?.length ?? null;
+  }).filter(n => n != null && n > 0);
+  const sPitRounds    = document.getElementById('s-pit-rounds');
+  const sPitRoundsSub = document.getElementById('s-pit-rounds-sub');
+  if (pitRoundCounts.length) {
+    const meanRounds = pitRoundCounts.reduce((a,b)=>a+b,0) / pitRoundCounts.length;
+    const PIT_MAX = 20;
+    const cappedN  = pitRoundCounts.filter(n => n >= PIT_MAX).length;
+    const cappedPct = Math.round(cappedN / pitRoundCounts.length * 100);
+    sPitRounds.textContent    = meanRounds.toFixed(1);
+    sPitRoundsSub.textContent = cappedN
+      ? `${cappedPct}% hit cap (n=${pitRoundCounts.length})`
+      : `to converge (n=${pitRoundCounts.length})`;
+  } else {
+    sPitRounds.textContent    = '—';
+    sPitRoundsSub.textContent = 'no pit data';
+  }
 }
 
 // ── SPEARMAN / RANK HELPERS ───────────────────────────────────────────────────
@@ -849,6 +927,149 @@ function renderRho(rows) {
     </div>`;
 }
 
+// ── AGREEMENT PANEL ───────────────────────────────────────────────────────────
+// For each rank position 1..5, computes how often the test instrument's pick
+// matches the baseline's pick. "Match" = same style at that rank.
+//
+// Also computes "top-2 set" agreement (do the top 2 styles match as a set?
+// regardless of which is #1) and "top-2 exact" (exact same #1 + #2 order).
+//
+// Runs against both baselines (TKI and Ranking) and lays them out side-by-side.
+
+function styleAtRank(ranksMap, rank) {
+  if (!ranksMap) return null;
+  const found = Object.entries(ranksMap).find(([s, r]) => r === rank);
+  return found ? found[0] : null;
+}
+
+function topNSet(ranksMap, n) {
+  if (!ranksMap) return null;
+  const styles = Object.entries(ranksMap)
+    .sort((a, b) => a[1] - b[1])
+    .slice(0, n)
+    .map(([s]) => s);
+  return styles.length === n ? new Set(styles) : null;
+}
+
+function setsEqual(a, b) {
+  if (!a || !b || a.size !== b.size) return false;
+  for (const x of a) if (!b.has(x)) return false;
+  return true;
+}
+
+function computeAgreement(rows, baseline) {
+  const RANKS = [1, 2, 3, 4, 5];
+  const perRank = RANKS.map(r => ({ rank: r, matches: 0, n: 0 }));
+  let top2Any = { matches: 0, n: 0 };
+  let top2Exact = { matches: 0, n: 0 };
+
+  rows.forEach(row => {
+    const test = getTestInstrument(row);
+    if (!test) return;
+    const testRanks = getRanks(row, test);
+    const baseRanks = getRanks(row, baseline);
+    if (!testRanks || !baseRanks) return;
+
+    // Per-rank match
+    RANKS.forEach((r, idx) => {
+      const ts = styleAtRank(testRanks, r);
+      const bs = styleAtRank(baseRanks, r);
+      if (ts && bs) {
+        perRank[idx].n += 1;
+        if (ts === bs) perRank[idx].matches += 1;
+      }
+    });
+
+    // Top-2 (any order)
+    const t2t = topNSet(testRanks, 2);
+    const t2b = topNSet(baseRanks, 2);
+    if (t2t && t2b) {
+      top2Any.n += 1;
+      if (setsEqual(t2t, t2b)) top2Any.matches += 1;
+    }
+
+    // Top-2 (exact order)
+    const t1t = styleAtRank(testRanks, 1);
+    const t2t_2 = styleAtRank(testRanks, 2);
+    const t1b = styleAtRank(baseRanks, 1);
+    const t2b_2 = styleAtRank(baseRanks, 2);
+    if (t1t && t2t_2 && t1b && t2b_2) {
+      top2Exact.n += 1;
+      if (t1t === t1b && t2t_2 === t2b_2) top2Exact.matches += 1;
+    }
+  });
+
+  return { perRank, top2Any, top2Exact };
+}
+
+function renderAgreement(rows) {
+  const el = document.getElementById('agreement-panel');
+  const tki = computeAgreement(rows, 'tki');
+  const rnk = computeAgreement(rows, 'ranking');
+
+  // If nothing has data, bail
+  const hasTki = tki.perRank.some(r => r.n > 0);
+  const hasRnk = rnk.perRank.some(r => r.n > 0);
+  if (!hasTki && !hasRnk) {
+    el.innerHTML = '<div class="empty">No data yet — need rows where a test instrument ran alongside a baseline.</div>';
+    return;
+  }
+
+  const fmtPct = (m, n) => n > 0 ? Math.round(m / n * 100) + '%' : '—';
+  const summaryLine = (label, t, r) => `
+    <div class="agreement-summary-row">
+      <span class="agreement-summary-lbl">${label}</span>
+      ${hasTki
+        ? `<span class="agreement-summary-val">vs TKI ${fmtPct(t.matches, t.n)}</span>
+           <span class="agreement-summary-meta">(n=${t.n})</span>`
+        : ''}
+      ${hasRnk
+        ? `<span class="agreement-summary-val ranking" style="margin-left:${hasTki ? '1rem' : '0'}">vs Ranking ${fmtPct(r.matches, r.n)}</span>
+           <span class="agreement-summary-meta">(n=${r.n})</span>`
+        : ''}
+    </div>`;
+
+  const rankLabels = {
+    1: ['Rank 1', 'primary'],
+    2: ['Rank 2', 'secondary'],
+    3: ['Rank 3', 'middle'],
+    4: ['Rank 4', 'middle'],
+    5: ['Rank 5', 'least'],
+  };
+
+  const cell = (data, baselineKey) => {
+    if (data.n === 0) return '<span class="ag-cell empty">no data</span>';
+    const pct = Math.round(data.matches / data.n * 100);
+    return `
+      <span class="ag-cell">
+        <div class="ag-bar-w"><div class="ag-bar ${baselineKey}" style="width:${pct}%"></div></div>
+        <span class="ag-pct">${pct}%</span>
+        <span class="ag-n">n=${data.n}</span>
+      </span>`;
+  };
+
+  el.innerHTML = `
+    <div class="agreement-summary">
+      ${summaryLine('Top 2 styles match (any order)',   tki.top2Any,   rnk.top2Any)}
+      ${summaryLine('Top 2 styles match (exact order)', tki.top2Exact, rnk.top2Exact)}
+    </div>
+    <div class="agreement-table">
+      <div class="ag-header">Position</div>
+      <div class="ag-header">vs TKI Baseline</div>
+      <div class="ag-header">vs Ranking Baseline</div>
+      ${[1,2,3,4,5].map(r => {
+        const [lbl, sub] = rankLabels[r];
+        const t = tki.perRank.find(x => x.rank === r);
+        const k = rnk.perRank.find(x => x.rank === r);
+        return `
+          <div class="ag-rank-lbl">${lbl} <em>${sub}</em></div>
+          ${hasTki ? cell(t, 'tki')     : '<span class="ag-cell empty">—</span>'}
+          ${hasRnk ? cell(k, 'ranking') : '<span class="ag-cell empty">—</span>'}
+        `;
+      }).join('')}
+    </div>`;
+}
+
 // ── BIAS PANEL ────────────────────────────────────────────────────────────────
 function renderBias(rows) {
   const el = document.getElementById('bias-panel');
@@ -922,11 +1143,25 @@ const TKI_ITEMS = [
   'Bring structure vs don\'t get involved',
 ];
 
+// Helper: pull TKI answers, supporting both new (all_results.tki.answers)
+// and legacy (tki_answers column) shapes.
+function getTKIAnswers(row) {
+  if (row.all_results?.tki?.answers && Array.isArray(row.all_results.tki.answers)) {
+    return row.all_results.tki.answers;
+  }
+  if (Array.isArray(row.tki_answers)) {
+    return row.tki_answers;
+  }
+  return null;
+}
+
 function renderRTTKI(rows) {
   const el = document.getElementById('rt-tki-panel');
   const itemRTs = Array.from({length:20}, (_,i) => {
-    const vals = rows.filter(r => r.tki_answers && Array.isArray(r.tki_answers))
-      .map(r => r.tki_answers[i]?.rt_ms).filter(x => x > 0 && x < 60000);
+    const vals = rows.map(r => {
+      const ans = getTKIAnswers(r);
+      return ans?.[i]?.rt_ms;
+    }).filter(x => x > 0 && x < 60000);
     return { i, label: TKI_ITEMS[i], mean: vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length) : null, n: vals.length };
   }).filter(x => x.mean !== null).sort((a,b) => b.mean - a.mean);
 
