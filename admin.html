@@ -296,84 +296,6 @@
     .sim-compare-col.highlight { background: var(--accent-bg); }
     .sim-compare-col.highlight .sim-compare-val { color: var(--accent); }
 
-    /* ── SPLASH EDITOR ──────────────────────────────────────────────────── */
-    details.splash-editor {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); margin-bottom: 1.25rem;
-      box-shadow: var(--shadow-sm); overflow: hidden;
-    }
-    details.splash-editor > summary {
-      padding: 0.75rem 1rem; cursor: pointer; user-select: none;
-      font-size: 0.78rem; font-weight: 700; color: var(--text-2);
-      display: flex; align-items: center; justify-content: space-between;
-      list-style: none;
-    }
-    details.splash-editor > summary::-webkit-details-marker { display: none; }
-    details.splash-editor > summary::after {
-      content: '▾'; color: var(--text-3); transition: transform 0.2s;
-    }
-    details.splash-editor[open] > summary::after { transform: rotate(180deg); }
-    details.splash-editor > summary:hover { color: var(--text); }
-    .splash-body {
-      padding: 0 1rem 1rem;
-      border-top: 1px solid var(--border);
-    }
-    .splash-meta {
-      font-size: 0.7rem; color: var(--text-3);
-      padding: 0.65rem 0; line-height: 1.5;
-    }
-    .splash-meta strong { color: var(--text-2); font-weight: 700; }
-    .splash-field { margin-bottom: 0.85rem; }
-    .splash-field label {
-      display: block; font-size: 0.68rem; font-weight: 700;
-      color: var(--text-3); text-transform: uppercase;
-      letter-spacing: 0.08em; margin-bottom: 0.35rem;
-    }
-    .splash-field input,
-    .splash-field textarea {
-      width: 100%; padding: 0.55rem 0.75rem;
-      border: 1.5px solid var(--border); border-radius: 8px;
-      background: var(--surface-2); color: var(--text);
-      font-family: var(--font); font-size: 0.85rem; line-height: 1.5;
-      outline: none; transition: border-color 0.15s;
-      resize: vertical;
-    }
-    .splash-field input:focus,
-    .splash-field textarea:focus { border-color: var(--accent); }
-    .splash-actions {
-      display: flex; align-items: center; gap: 0.75rem;
-      margin-top: 0.5rem;
-    }
-    .splash-save {
-      padding: 0.5rem 1.1rem; background: var(--accent); color: #fff;
-      border: none; border-radius: 8px; cursor: pointer;
-      font-family: var(--font); font-size: 0.78rem; font-weight: 700;
-      transition: all 0.15s;
-    }
-    .splash-save:hover { background: var(--accent-dk); }
-    .splash-save:disabled { opacity: 0.5; cursor: default; }
-    .splash-status { font-size: 0.72rem; color: var(--text-3); }
-    .splash-status.ok  { color: var(--green); }
-    .splash-status.err { color: var(--red); }
-    .inst-checks {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 0.4rem; margin-top: 0.1rem;
-    }
-    .inst-check {
-      display: flex; align-items: center; gap: 0.5rem;
-      padding: 0.5rem 0.75rem; background: var(--surface-2);
-      border: 1.5px solid var(--border); border-radius: 8px;
-      cursor: pointer; font-size: 0.82rem; color: var(--text-2);
-      transition: border-color 0.15s, background 0.15s;
-    }
-    .inst-check:hover { border-color: var(--text-3); }
-    .inst-check input { margin: 0; cursor: pointer; accent-color: var(--accent); }
-    .inst-check input:checked ~ span:first-of-type { color: var(--accent); font-weight: 700; }
-    .inst-check:has(input:checked) { border-color: var(--accent); background: var(--accent-bg); }
-    .inst-check .inst-desc {
-      margin-left: auto; font-size: 0.7rem; color: var(--text-3);
-    }
-
     /* ── DUAL RHO ──────────────────────────────────────────────────────── */
     .rho-dual-summary {
       display: flex; flex-direction: column; gap: 0.4rem;
@@ -442,30 +364,6 @@
 <!-- MAIN DASHBOARD -->
 <div id="dashboard" style="display:none">
 <div class="page">
-
-  <!-- Active config editor (instruments) -->
-  <details class="splash-editor" id="splash-editor">
-    <summary>Edit active study config (instruments)</summary>
-    <div class="splash-body">
-      <div class="splash-meta" id="splash-meta">Loading active config…</div>
-      <div class="splash-field">
-        <label>Instruments to run <span style="font-weight:500;text-transform:none;letter-spacing:0;color:var(--text-3)">— ranking always runs last automatically</span></label>
-        <div class="inst-checks" id="inst-checks">
-          <label class="inst-check"><input type="checkbox" value="tki">    <span>TKI</span><span class="inst-desc">forced-choice</span></label>
-          <label class="inst-check"><input type="checkbox" value="pit">    <span>Pit</span><span class="inst-desc">adaptive head-to-head</span></label>
-          <label class="inst-check"><input type="checkbox" value="hybrid"> <span>Hybrid</span><span class="inst-desc">Likert</span></label>
-          <label class="inst-check"><input type="checkbox" value="slider"> <span>Slider</span><span class="inst-desc">visual</span></label>
-        </div>
-      </div>
-      <div style="font-size:0.7rem;color:var(--text-3);margin-bottom:0.85rem;line-height:1.5">
-        Splash title and body are static — edit <code style="font-size:0.72rem;background:var(--surface-2);padding:0.05rem 0.3rem;border-radius:4px">index.html</code> directly.
-      </div>
-      <div class="splash-actions">
-        <button class="splash-save" id="splash-save-btn" onclick="saveActiveConfig()">Save changes</button>
-        <span class="splash-status" id="splash-status"></span>
-      </div>
-    </div>
-  </details>
 
   <!-- Controls -->
   <div class="controls">
@@ -641,7 +539,6 @@ async function doLogin() {
     document.getElementById('dashboard').style.display = 'block';
     populateStudyFilter();
     renderAll();
-    loadActiveConfig();
 
   } catch(e) {
     document.getElementById('pw-err').textContent = 'Connection error — try again.';
@@ -659,118 +556,6 @@ function logout() {
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('login-screen').style.display = 'block';
   document.getElementById('pw').value = '';
-}
-
-// ── ACTIVE CONFIG EDITOR ──────────────────────────────────────────────────────
-let _activeConfig = null;  // {id, name, instruments, ...} or null
-
-async function loadActiveConfig() {
-  const meta   = document.getElementById('splash-meta');
-  const status = document.getElementById('splash-status');
-  const btn    = document.getElementById('splash-save-btn');
-
-  status.textContent = '';
-  status.className = 'splash-status';
-  btn.disabled = true;
-
-  if (window.location.protocol === 'file:') {
-    meta.innerHTML = '<em>Dev mode — config editing disabled.</em>';
-    return;
-  }
-
-  try {
-    const r = await fetch('/api/admin-config', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ password: _pw, action: 'list' }),
-    });
-    if (!r.ok) throw new Error('Server error ' + r.status);
-    const configs = await r.json();
-    const active  = Array.isArray(configs) ? configs.find(c => c.is_active) : null;
-
-    if (!active) {
-      _activeConfig = null;
-      meta.innerHTML = '<strong>No active config.</strong> Set one as active in Supabase before editing.';
-      btn.disabled = true;
-      document.querySelectorAll('#inst-checks input[type=checkbox]').forEach(cb => {
-        cb.checked  = false;
-        cb.disabled = true;
-      });
-      return;
-    }
-
-    _activeConfig = active;
-    btn.disabled = false;
-    const activeInst = Array.isArray(active.instruments) ? active.instruments : [];
-    document.querySelectorAll('#inst-checks input[type=checkbox]').forEach(cb => {
-      cb.checked  = activeInst.includes(cb.value);
-      cb.disabled = false;
-    });
-    const inst = activeInst.length ? activeInst.join(', ') : '(none)';
-    meta.innerHTML = `Editing <strong>${escapeHtml(active.name || '(unnamed)')}</strong> · currently: ${escapeHtml(inst)}`;
-  } catch(e) {
-    meta.innerHTML = `<span style="color:var(--red)">Error loading config: ${escapeHtml(e.message)}</span>`;
-    btn.disabled = true;
-  }
-}
-
-async function saveActiveConfig() {
-  if (!_activeConfig) return;
-  const status = document.getElementById('splash-status');
-  const btn    = document.getElementById('splash-save-btn');
-
-  const newInst = Array.from(document.querySelectorAll('#inst-checks input[type=checkbox]:checked'))
-    .map(cb => cb.value);
-  const oldInst = Array.isArray(_activeConfig.instruments) ? _activeConfig.instruments : [];
-  const sameInst = oldInst.length === newInst.length &&
-                   oldInst.every(x => newInst.includes(x));
-
-  if (sameInst) {
-    status.textContent = 'No changes.';
-    status.className = 'splash-status';
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = 'Saving…';
-  status.textContent = '';
-  status.className = 'splash-status';
-
-  try {
-    const r = await fetch('/api/admin-config', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({
-        password:    _pw,
-        action:      'update',
-        id:          _activeConfig.id,
-        instruments: newInst,
-      }),
-    });
-    if (!r.ok) {
-      const txt = await r.text();
-      throw new Error(`HTTP ${r.status}: ${txt.slice(0, 120)}`);
-    }
-    _activeConfig.instruments = newInst;
-    const metaEl = document.getElementById('splash-meta');
-    const instLbl = newInst.length ? newInst.join(', ') : '(none)';
-    metaEl.innerHTML = `Editing <strong>${escapeHtml(_activeConfig.name || '(unnamed)')}</strong> · currently: ${escapeHtml(instLbl)}`;
-    status.textContent = '✓ Saved';
-    status.className = 'splash-status ok';
-    setTimeout(() => { status.textContent = ''; status.className = 'splash-status'; }, 2500);
-  } catch(e) {
-    status.textContent = 'Save failed — ' + e.message;
-    status.className = 'splash-status err';
-  }
-
-  btn.disabled = false;
-  btn.textContent = 'Save changes';
-}
-
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-  }[c]));
 }
 
 // ── DATA FETCH ────────────────────────────────────────────────────────────────
