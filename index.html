@@ -437,9 +437,17 @@
 </div>
 
 <!-- ═══════════════════════ SPLASH ═══════════════════════════════════════════ -->
+<!-- ┌─────────────────────────────────────────────────────────────────────┐ -->
+<!-- │ EDIT SPLASH TEXT HERE — title + body are static. Change directly.   │ -->
+<!-- │ Paragraphs in the body are <p>…</p>; <strong> works as expected.    │ -->
+<!-- └─────────────────────────────────────────────────────────────────────┘ -->
 <div class="screen active" id="screen-splash">
   <h1 id="splash-title">Welcome to our study!</h1>
-  <div id="splash-body"></div>
+  <div id="splash-body">
+    <p>You will be presented with multiple choice questions on how you prefer to deal with conflict, disagreement, and negotiation strategies. When answering, please think about how you typically deal with these kinds of situations and answer as honestly as you can. Many questions will look the same, but that is by design.</p>
+    <p><strong>This is not a test, there are no right answers.</strong></p>
+    <p>Your answers are completely anonymous beyond the collection of your Prolific ID for payment verification purposes. Your participation is voluntary, but you must complete every question in order to receive payment.</p>
+  </div>
   <div class="btn-row">
     <button class="btn btn-primary btn-lg" onclick="goTo('prolific')">Begin →</button>
   </div>
@@ -877,12 +885,11 @@ const S = {
 
 // ── CONFIG LOADER ─────────────────────────────────────────────────────────────
 async function loadConfig() {
-  // Defaults if no config available (dev mode or first-run)
+  // Defaults if no config available (dev mode or first-run).
+  // Note: splash text is now baked into the HTML — see #screen-splash above.
   const defaults = {
     name: 'Default',
     instruments: ['pit'],
-    splash_title: 'Welcome to our study!',
-    splash_body: 'You will be presented with multiple choice questions on how you prefer to deal with conflict, disagreement, and negotiation strategies. When answering, please think about how you typically deal with these kinds of situations and answer as honestly as you can. Many questions will look the same, but that is by design.<br><br><strong>This is not a test, there are no right answers.</strong><br><br>Your answers are completely anonymous beyond the collection of your Prolific ID for payment verification purposes. Your participation is voluntary, but you must complete every question in order to receive payment.',
     prolific_code: window.CFG.completionCode,
   };
 
@@ -906,9 +913,7 @@ function applyConfig(cfg) {
   const instruments = Array.isArray(cfg.instruments) ? cfg.instruments.slice() : [];
   if (!instruments.includes('ranking')) instruments.push('ranking');
   S.queue = instruments;
-  // Render splash content
-  document.getElementById('splash-title').textContent = cfg.splash_title || 'Welcome to our study!';
-  document.getElementById('splash-body').innerHTML   = '<p>' + (cfg.splash_body || '').replace(/\n\n/g, '</p><p>') + '</p>';
+  // Splash text is static (baked into HTML) — no DOM overwrites here.
   // Override completion code if config has one
   if (cfg.prolific_code) {
     S.cc = S.cc || cfg.prolific_code;
