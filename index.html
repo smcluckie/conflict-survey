@@ -1449,17 +1449,18 @@ function strengthOf(s, instrument) {
 }
 const SECONDARY_THRESHOLD = 3 / 8; // matches the original TKI count >= 3 rule
 
-// Per-rank-line label inside the primary cards, e.g. "Primary Style · 6/8"
-// for TKI, "Primary Style · 78% win rate" for Pit.
-function rankLineLabel(s, instrument, rankPrefix) {
-  if (instrument === 'tki') return `${rankPrefix} · ${s.count}/${s.max || 8}`;
-  if (instrument === 'pit') return `${rankPrefix} · ${Math.round(s.win_rate * 100)}% win rate`;
+// Per-rank-line label inside cards. With percentages and ranks removed from
+// the results, this is just the role label.
+function rankLineLabel(rankPrefix) {
   return rankPrefix;
 }
 
-// Score string used in the comparison tables (one row per style)
+// Score string used in the comparison tables (one row per style).
+// Comparison block still shows scores since it's analytical context, not the
+// participant's headline result.
 function comparisonScoreLabel(s, instrument) {
   if (instrument === 'tki')                          return `${s.count}/${s.max || 8}`;
+  if (instrument === 'pit' && s.bt_strength != null) return `${s.bt_strength.toFixed(2)} (BT)`;
   if (instrument === 'pit' && s.win_rate != null)    return `${Math.round(s.win_rate * 100)}% (${s.wins}/${s.matches})`;
   if (instrument === 'ranking')                      return `rank ${s.rank}`;
   if (s.total != null)                               return `${s.total} total`;
@@ -1489,7 +1490,7 @@ function renderResults() {
     if (rank === 1) {
       html += `
         <div class="sty-card primary">
-          <div class="sty-rank">${rankLineLabel(s, primaryKey, 'Primary Style')}</div>
+          <div class="sty-rank">${rankLineLabel('Primary Style')}</div>
           <div class="sty-name">${s.style}</div>
           <div class="sty-tag">${inf.tag}</div>
           <div class="sty-body">${inf.body}</div>
@@ -1501,7 +1502,7 @@ function renderResults() {
     } else if (isSecondary) {
       html += `
         <div class="sty-card secondary">
-          <div class="sty-rank">${rankLineLabel(s, primaryKey, 'Secondary Style')}</div>
+          <div class="sty-rank">${rankLineLabel('Secondary Style')}</div>
           <div class="sty-name">${s.style}</div>
           <div class="sty-tag">${inf.tag}</div>
           <div class="sty-body">${inf.body}</div>
@@ -1512,12 +1513,12 @@ function renderResults() {
         </div>`;
     } else {
       // Rank 2 with low strength, or ranks 3–5 — neutral framing + tip, grouped
+      // Section header drops in once at the first lower card.
       if (!html.includes('lower-group-label')) {
-        html += `<div class="lower-group-label">Less dominant styles in your profile</div>`;
+        html += `<div class="lower-group-label">Less Dominant Styles</div>`;
       }
       html += `
         <div class="sty-card lower">
-          <div class="sty-rank">${rankLineLabel(s, primaryKey, `Rank ${rank}`)}</div>
           <div class="sty-name">${s.style}</div>
           <div class="sty-tag">${inf.neutral_tag}</div>
           <div class="sty-body">${inf.neutral_body}</div>
@@ -1581,9 +1582,6 @@ function dlPDF(){
     return;
   }
   const scores = S.results[primaryKey].scores;
-  const labelMax = (s) => primaryKey === 'tki'
-    ? `${s.count}/${s.max || 8}`
-    : `${Math.round((s.win_rate || 0) * 100)}%`;
 
   // ── Header bar ──────────────────────────────────────────────────────────────
   doc.setFillColor(91, 79, 232);
@@ -1631,10 +1629,10 @@ function dlPDF(){
       doc.setFillColor(200, 198, 220);
       doc.rect(20, y - 1, 2.5, blockH - 2, 'F');
 
-      // Rank label
+      // Section label (one-time on first lower card)
       doc.setFontSize(7); doc.setFont('helvetica','bold');
       doc.setTextColor(142, 138, 174);
-      doc.text(`RANK ${s.rank} · ${labelMax(s)}`, 26, y + 3);
+      doc.text('LESS DOMINANT', 26, y + 3);
 
       // Style name
       doc.setFontSize(11); doc.setFont('helvetica','bold');
@@ -1682,10 +1680,10 @@ function dlPDF(){
       doc.setFillColor(accentR, accentG, accentB);
       doc.rect(20, y - 1, 3, blockH, 'F');
 
-      // Rank label
+      // Role label
       doc.setFontSize(7); doc.setFont('helvetica','bold');
       doc.setTextColor(accentR, accentG, accentB);
-      doc.text(isPrimary ? `PRIMARY STYLE · ${labelMax(s)}` : `SECONDARY STYLE · ${labelMax(s)}`, 26, y + 4);
+      doc.text(isPrimary ? 'PRIMARY STYLE' : 'SECONDARY STYLE', 26, y + 4);
 
       // Style name
       doc.setFontSize(14); doc.setFont('helvetica','bold');

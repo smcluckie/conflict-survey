@@ -276,25 +276,18 @@
     .spinner { width: 32px; height: 32px; margin: 2rem auto; border: 3px solid var(--surface-2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── SIMULATOR ──────────────────────────────────────────────────────── */
-    .sim-slider-wrap { margin-bottom: 1.25rem; }
-    .sim-slider-wrap label { font-size: 0.72rem; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 0.4rem; }
-    input.sim-range { width: 100%; -webkit-appearance: none; appearance: none; height: 4px; border-radius: 4px; background: var(--surface-2); outline: none; cursor: pointer; }
-    input.sim-range::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); border: 2px solid var(--surface); box-shadow: var(--shadow-sm); cursor: pointer; }
-    .sim-live-val { font-size: 1.1rem; font-weight: 800; color: var(--accent); text-align: center; margin-bottom: 0.75rem; }
-    .sim-summary { font-size: 0.82rem; color: var(--text-2); margin-bottom: 1rem; text-align: center; }
+    /* ── PIT STOP DISTRIBUTION ─────────────────────────────────────────── */
     .sim-hist { display: flex; flex-direction: column; gap: 0.3rem; }
     .sim-hist-row { display: flex; align-items: center; gap: 0.6rem; font-size: 0.72rem; }
-    .sim-hist-lbl { min-width: 60px; color: var(--text-3); font-weight: 600; }
+    .sim-hist-lbl { min-width: 80px; color: var(--text-3); font-weight: 600; }
     .sim-hist-bw  { flex: 1; height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
     .sim-hist-b   { height: 6px; border-radius: 3px; background: var(--accent); transition: width 0.4s; }
+    .sim-hist-b.cap { background: var(--amber); }
     .sim-hist-n   { min-width: 28px; text-align: right; color: var(--text-3); }
-    .sim-compare { display: flex; gap: 1rem; margin-top: 1rem; }
-    .sim-compare-col { flex: 1; text-align: center; background: var(--surface-2); border-radius: 10px; padding: 0.75rem; }
-    .sim-compare-val { font-size: 1.3rem; font-weight: 800; color: var(--text); }
-    .sim-compare-lbl { font-size: 0.65rem; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.2rem; }
-    .sim-compare-col.highlight { background: var(--accent-bg); }
-    .sim-compare-col.highlight .sim-compare-val { color: var(--accent); }
+    .pit-summary-row { display: flex; gap: 1rem; margin-bottom: 1rem; }
+    .pit-summary-col { flex: 1; text-align: center; background: var(--surface-2); border-radius: 10px; padding: 0.75rem; }
+    .pit-summary-val { font-size: 1.3rem; font-weight: 800; color: var(--text); }
+    .pit-summary-lbl { font-size: 0.65rem; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.2rem; }
 
     /* ── DUAL RHO ──────────────────────────────────────────────────────── */
     .rho-dual-summary {
@@ -486,23 +479,17 @@
     </div>
   </div>
 
-  <!-- Pit Threshold Simulator — only shown when pit data exists -->
-  <div class="section" id="sim-section" style="display:none">
-    <div class="section-title">Pit Stopping Threshold Simulator</div>
+  <!-- Pit Stop Distribution — when participants converged -->
+  <div class="section" id="pit-stop-section" style="display:none">
     <div class="panel">
-      <div class="panel-title">How early would participants have stopped at a different threshold?</div>
-      <div class="panel-sub" style="margin-bottom:1.25rem;font-size:0.73rem;color:var(--text-3)">
-        Replays each participant's recorded matchup history under any threshold you choose.
-        The live study used <strong>0.15</strong>. Drag to compare.
+      <div class="panel-title">Pit Convergence — Stop-round Distribution</div>
+      <div class="panel-sub" style="margin-bottom:1rem;font-size:0.73rem;color:var(--text-3)">
+        How many rounds each participant played. A flat distribution suggests the algorithm is stopping
+        at varied points based on real participant differences. Spikes at round 10 or round 20 (cap)
+        suggest either too-loose or too-strict thresholds.
       </div>
-      <div class="sim-slider-wrap">
-        <label>Threshold: adjacent win-rate gap required to stop</label>
-        <input type="range" class="sim-range" id="sim-slider" min="0.10" max="0.40" step="0.05" value="0.25" oninput="runSim()">
-      </div>
-      <div class="sim-live-val" id="sim-live-val">0.25</div>
-      <div class="sim-summary" id="sim-summary">—</div>
-      <div class="sim-compare" id="sim-compare"></div>
-      <div class="sim-hist" id="sim-hist" style="margin-top:1.25rem"></div>
+      <div id="pit-stop-summary" style="margin-bottom:1rem"></div>
+      <div class="sim-hist" id="pit-stop-hist"></div>
     </div>
   </div>
 
@@ -686,7 +673,7 @@ function renderAll() {
   renderRTTKI(analysisRows);
   renderRTInst(analysisRows);
   renderTable(tableRows);
-  runSim();
+  renderPitStops(analysisRows);
 }
 
 // ── STATS ─────────────────────────────────────────────────────────────────────
@@ -1322,7 +1309,21 @@ function renderTable(rows) {
             <div>
               <div class="exp-col-title">Instrument Scores (${r.instrument})</div>
               ${(r.instrument_scores||[]).map(s=>{
-                const val = s.win_rate!=null ? (s.win_rate*100).toFixed(0)+'%' : s.avg!=null ? s.avg+'avg' : s.total!=null ? s.total : `rank ${s.rank}`;
+                let val;
+                if (s.bt_strength != null) {
+                  // New format: BT strength as primary, win rate + Elo as context
+                  val = `BT ${s.bt_strength.toFixed(2)}`;
+                  if (s.elo != null) val += ` · Elo ${Math.round(s.elo)}`;
+                  if (s.win_rate != null) val += ` · ${(s.win_rate*100).toFixed(0)}%`;
+                } else if (s.win_rate != null) {
+                  val = (s.win_rate*100).toFixed(0)+'%';
+                } else if (s.avg != null) {
+                  val = s.avg+' avg';
+                } else if (s.total != null) {
+                  val = s.total;
+                } else {
+                  val = `rank ${s.rank}`;
+                }
                 return `<div class="mini-row"><span class="mini-rank">${s.rank}</span><span class="mini-name">${s.style}</span><span class="mini-val">${val}</span></div>`;
               }).join('')}
               ${(() => {
@@ -1403,105 +1404,70 @@ async function toggleExclude(idx, sessionId, currentlyExcluded) {
   }
 }
 
-// ── PIT THRESHOLD SIMULATOR ───────────────────────────────────────────────────
-const PIT_CODES_SIM = ['As','Cp','Rv','Md','Fx'];
-const LIVE_THRESHOLD = 0.15;
-const SIM_MAX = 20;
-const SIM_MIN = 10;
+// ── PIT STOP DISTRIBUTION ─────────────────────────────────────────────────────
+const PIT_CAP = 20;
+const PIT_FLOOR = 10;
 
-function simReplayOne(history, threshold) {
-  // Replay a single participant's pit history under a given threshold.
-  // Returns the round at which they would have stopped.
-  const wins    = { As:0, Cp:0, Rv:0, Md:0, Fx:0 };
-  const matches = { As:0, Cp:0, Rv:0, Md:0, Fx:0 };
+function renderPitStops(rows) {
+  const section = document.getElementById('pit-stop-section');
+  // Get all pit-bearing rows and how many rounds each played
+  const pitRounds = rows
+    .map(r => {
+      const ans = getPitAnswers(r);
+      return ans ? ans.length : null;
+    })
+    .filter(n => n != null && n > 0);
 
-  for (let i = 0; i < history.length; i++) {
-    const h = history[i];
-    if (!h.codeA || !h.codeB || !h.winner) continue;
-    wins[h.winner]++;
-    matches[h.codeA]++;
-    matches[h.codeB]++;
-    const round = i + 1;
-    if (round < SIM_MIN) continue;
-    if (round >= SIM_MAX) return round;
-    // Check settled
-    if (!PIT_CODES_SIM.every(c => matches[c] >= 2)) continue;
-    const ranked = [...PIT_CODES_SIM].sort((a,b) => {
-      const wrA = matches[a] ? wins[a]/matches[a] : 0.5;
-      const wrB = matches[b] ? wins[b]/matches[b] : 0.5;
-      return wrB - wrA;
-    });
-    let settled = true;
-    for (let j = 0; j < ranked.length - 1; j++) {
-      const wrJ  = matches[ranked[j]]   ? wins[ranked[j]]   / matches[ranked[j]]   : 0.5;
-      const wrJ1 = matches[ranked[j+1]] ? wins[ranked[j+1]] / matches[ranked[j+1]] : 0.5;
-      if (wrJ - wrJ1 < threshold) { settled = false; break; }
-    }
-    if (settled) return round;
+  if (!pitRounds.length) {
+    section.style.display = 'none';
+    return;
   }
-  return history.length; // hit the end of recorded history
-}
+  section.style.display = '';
 
-function runSim() {
-  const threshold = parseFloat(document.getElementById('sim-slider').value);
-  document.getElementById('sim-live-val').textContent = threshold.toFixed(2);
+  const mean = pitRounds.reduce((a,b) => a+b, 0) / pitRounds.length;
+  const capped = pitRounds.filter(n => n >= PIT_CAP).length;
+  const earlyMin = pitRounds.filter(n => n === PIT_FLOOR).length;
+  const sorted = [...pitRounds].sort((a,b) => a-b);
+  const median = sorted[Math.floor(sorted.length/2)];
 
-  // Get pit-bearing rows from analysis set (works with all_results or legacy)
-  const pitRows = filtered(false)
-    .map(r => ({ row: r, answers: getPitAnswers(r) }))
-    .filter(p => p.answers && p.answers.length >= SIM_MIN);
-
-  // Show/hide section
-  document.getElementById('sim-section').style.display = pitRows.length ? '' : 'none';
-  if (!pitRows.length) return;
-
-  // Replay each participant at both the live threshold and the selected threshold
-  const simRounds  = pitRows.map(p => simReplayOne(p.answers, threshold));
-  const liveRounds = pitRows.map(p => simReplayOne(p.answers, LIVE_THRESHOLD));
-
-  const simMean  = simRounds.reduce((a,b)=>a+b,0)  / simRounds.length;
-  const liveMean = liveRounds.reduce((a,b)=>a+b,0) / liveRounds.length;
-  const simCap   = simRounds.filter(r => r >= SIM_MAX).length;
-  const liveCap  = liveRounds.filter(r => r >= SIM_MAX).length;
-  const diff     = simMean - liveMean;
-  const diffStr  = diff === 0 ? 'same' : (diff > 0 ? '+' : '') + diff.toFixed(1) + ' rounds vs live';
-
-  document.getElementById('sim-summary').textContent =
-    `n=${pitRows.length} pit participants · mean ${simMean.toFixed(1)} rounds · ${simCap} hit cap`;
-
-  // Compare stat chips
-  document.getElementById('sim-compare').innerHTML = `
-    <div class="sim-compare-col">
-      <div class="sim-compare-val">${liveMean.toFixed(1)}</div>
-      <div class="sim-compare-lbl">Live (0.25) mean rounds</div>
-    </div>
-    <div class="sim-compare-col ${threshold !== LIVE_THRESHOLD ? 'highlight' : ''}">
-      <div class="sim-compare-val">${simMean.toFixed(1)}</div>
-      <div class="sim-compare-lbl">Simulated (${threshold.toFixed(2)}) mean rounds</div>
-    </div>
-    <div class="sim-compare-col">
-      <div class="sim-compare-val" style="color:${diff < 0 ? 'var(--green)' : diff > 0 ? 'var(--amber)' : 'var(--text-3)'}">${diffStr}</div>
-      <div class="sim-compare-lbl">Difference</div>
-    </div>
-    <div class="sim-compare-col">
-      <div class="sim-compare-val">${simCap}</div>
-      <div class="sim-compare-lbl">Hit cap (${SIM_MAX} rounds)</div>
+  document.getElementById('pit-stop-summary').innerHTML = `
+    <div class="pit-summary-row">
+      <div class="pit-summary-col">
+        <div class="pit-summary-val">${mean.toFixed(1)}</div>
+        <div class="pit-summary-lbl">Mean rounds (n=${pitRounds.length})</div>
+      </div>
+      <div class="pit-summary-col">
+        <div class="pit-summary-val">${median}</div>
+        <div class="pit-summary-lbl">Median</div>
+      </div>
+      <div class="pit-summary-col">
+        <div class="pit-summary-val" style="color:${capped/pitRounds.length > 0.4 ? 'var(--amber)' : 'var(--text)'}">${capped}</div>
+        <div class="pit-summary-lbl">Hit cap (${PIT_CAP})</div>
+      </div>
+      <div class="pit-summary-col">
+        <div class="pit-summary-val">${earlyMin}</div>
+        <div class="pit-summary-lbl">Stopped at min (${PIT_FLOOR})</div>
+      </div>
     </div>`;
 
-  // Histogram of stopping rounds
+  // Histogram
   const buckets = {};
-  for (let r = SIM_MIN; r <= SIM_MAX; r++) buckets[r] = 0;
-  simRounds.forEach(r => { buckets[Math.min(r, SIM_MAX)]++; });
+  for (let r = PIT_FLOOR; r <= PIT_CAP; r++) buckets[r] = 0;
+  pitRounds.forEach(n => { buckets[Math.min(n, PIT_CAP)]++; });
   const maxBucket = Math.max(...Object.values(buckets), 1);
 
-  document.getElementById('sim-hist').innerHTML =
-    Object.entries(buckets).map(([r, n]) => `
-      <div class="sim-hist-row">
-        <span class="sim-hist-lbl">${r === String(SIM_MAX) ? `${SIM_MAX} (cap)` : `Round ${r}`}</span>
-        <div class="sim-hist-bw"><div class="sim-hist-b" style="width:${Math.round(n/maxBucket*100)}%"></div></div>
-        <span class="sim-hist-n">${n}</span>
-      </div>`).join('');
+  document.getElementById('pit-stop-hist').innerHTML =
+    Object.entries(buckets).map(([r, n]) => {
+      const isCap = r === String(PIT_CAP);
+      return `
+        <div class="sim-hist-row">
+          <span class="sim-hist-lbl">${isCap ? `Round ${r} (cap)` : `Round ${r}`}</span>
+          <div class="sim-hist-bw"><div class="sim-hist-b ${isCap ? 'cap' : ''}" style="width:${Math.round(n/maxBucket*100)}%"></div></div>
+          <span class="sim-hist-n">${n}</span>
+        </div>`;
+    }).join('');
 }
+
 
 // ── SAMPLE DATA (for dev/demo when Supabase not configured) ───────────────────
 function getSampleData() {
@@ -1530,8 +1496,19 @@ function getSampleData() {
       };
     }
     if (cfg.insts.includes('pit')) {
+      // Synthetic BT strengths: top style at ~3.0, decreasing
+      const btStrengths = pitRanks.map((_,j) => 3.5 - j * 0.7);
+      // Synthetic Elo: top at ~1150, decreasing
+      const eloValues   = pitRanks.map((_,j) => 1150 - j * 60);
       all_results.pit = {
-        scores: pitRanks.map((s,j) => ({ style:s, code:'XX', wins: 4-j, matches: 4, win_rate: (4-j)/4, rank: j+1 })),
+        scores: pitRanks.map((s,j) => ({
+          style: s, code: 'XX',
+          wins: 4-j, matches: 4,
+          win_rate: (4-j)/4,
+          elo: eloValues[j],
+          bt_strength: +btStrengths[j].toFixed(3),
+          rank: j+1,
+        })),
         answers: Array.from({length: 8+Math.floor(Math.random()*7)}, (_,k) => ({
           round: k+1, codeA: ['As','Cp','Rv','Md','Fx'][k%5], codeB: ['Cp','Rv','Md','Fx','As'][k%5],
           winner: Math.random()>0.5?'As':'Cp', rt_ms: 2000+Math.random()*9000
