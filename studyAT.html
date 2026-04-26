@@ -1048,103 +1048,189 @@ function finishRanking() {
   nextInstrument();
 }
 
-// ── PIT — ADAPTIVE ENGINE ─────────────────────────────────────────────────────
+// ── PIT — ADAPTIVE ENGINE (Elo-driven sampling + Bradley-Terry final scoring) ──
+//
+// Each round:
+//   1. Update Elo ratings (incremental, cheap).
+//   2. Check stopping rule against current Elo ratings.
+//   3. If continuing, score every possible pair by importance × inverse-gap,
+//      minus a repeat penalty. Play the highest-scoring pair.
+//
+// At the end:
+//   Run Bradley-Terry MLE on the full match history. BT is symmetric in
+//   match order and accounts for opponent strength, which Elo does not.
+//   The BT strength is what gets saved as the participant's final score;
+//   win counts are also kept for backwards-compatible reporting.
+
+const PIT_ELO_K            = 64;       // Elo K-factor (high since few matches)
+const PIT_ELO_START        = 1000;     // initial rating
+// Stopping thresholds in Elo points. With K=64 and ~5-8 matches per style,
+// median final gaps land around 50-65 points. Thresholds chosen so a typical
+// participant with a clear ranking can stop before the cap.
+const PIT_GAP_TOP12        = 60;       // rank 1 vs 2 must clear this
+const PIT_GAP_TOP23        = 55;       // rank 2 vs 3 must clear this (defines top-2)
+const PIT_GAP_BOT45        = 55;       // rank 4 vs 5 must clear this (floor)
+// Sampling priority weights — lower = more attractive (we minimize score).
+const PIT_PRIORITY = {
+  top12:  0.5,   // (rank 1, rank 2) — define primary
+  top23:  0.5,   // (rank 2, rank 3) — define top-2 boundary
+  middle: 1.5,   // (rank 3, rank 4) — least important
+  bot45:  0.6,   // (rank 4, rank 5) — define floor
+  other:  1.5,   // non-adjacent pairs — generally less informative
+};
+const PIT_REPEAT_PENALTY   = 0.4;      // adds per prior repeat of the same pair
+const PIT_MIN_MATCHES      = 3;        // each style must have at least this many
 
 function pitInitState() {
-  // Shuffle the forced openers so A/B position and axis order aren't confounded
-  const openers = PIT_FORCED_OPENERS.map(pair =>
-    Math.random() < 0.5 ? pair : [pair[1], pair[0]]
-  ).sort(() => Math.random() - 0.5);
-
   PS = {
     wins:    { As:0, Cp:0, Rv:0, Md:0, Fx:0 },
     matches: { As:0, Cp:0, Rv:0, Md:0, Fx:0 },
-    history: [], // {round, codeA, codeB, winner, rt_ms, wrA, wrB, kind}
+    elo:     { As:PIT_ELO_START, Cp:PIT_ELO_START, Rv:PIT_ELO_START,
+               Md:PIT_ELO_START, Fx:PIT_ELO_START },
+    history: [],   // {round, codeA, codeB, winner, rt_ms, eloA, eloB, kind}
     round:   0,
     codeA:   null,
     codeB:   null,
-    nextKind: 'adaptive',  // set by pitPickNext, read by pitSel
-    openers,
+    nextKind: 'random',
   };
 }
-
-// The first two rounds are forced: the two theoretical "axis" pairs.
-// Compete vs Accommodate (assertiveness axis) and Collaborate vs Avoid (cooperativeness axis).
-// Randomized so order isn't a confound.
-const PIT_FORCED_OPENERS = [
-  ['As', 'Fx'],  // Compete vs Accommodate
-  ['Cp', 'Rv'],  // Collaborate vs Avoid
-];
 
 function pitWR(code) {
   return PS.matches[code] === 0 ? 0.5 : PS.wins[code] / PS.matches[code];
 }
 
-function pitPickNext() {
-  // Forced openers — rounds 1 and 2 are always the two axis pairs
-  if (PS.round < PS.openers.length) {
-    PS.nextKind = 'opener';
-    return PS.openers[PS.round];
-  }
+function pitEloRanked() {
+  return [...PIT_CODES].sort((a, b) => PS.elo[b] - PS.elo[a]);
+}
 
-  // If we're at round 19 (the last slot before cap), check for ties to break
-  if (PS.round === PIT_MAX - 1) {
-    const tieBreaker = pitFindTieToBreak();
-    if (tieBreaker) {
-      PS.nextKind = 'tiebreak';
-      return tieBreaker;
-    }
+// Importance of a pair given current ranking — used by sampling.
+// `rankIdx` is the position of each code in the current Elo ranking (0-indexed).
+function pitPairPriority(rankA, rankB) {
+  const lo = Math.min(rankA, rankB);
+  const hi = Math.max(rankA, rankB);
+  const adjacent = (hi - lo === 1);
+  if (!adjacent) return PIT_PRIORITY.other;
+  if (lo === 0) return PIT_PRIORITY.top12;       // ranks 1-2
+  if (lo === 1) return PIT_PRIORITY.top23;       // ranks 2-3
+  if (lo === 2) return PIT_PRIORITY.middle;      // ranks 3-4
+  if (lo === 3) return PIT_PRIORITY.bot45;       // ranks 4-5
+  return PIT_PRIORITY.other;
+}
+
+function pitPickNext() {
+  // First match is fully random — no forced openers, no theoretical priors.
+  // This lets us study which pairings actually lead to the best outcomes.
+  if (PS.round === 0) {
+    PS.nextKind = 'random';
+    const shuffled = [...PIT_CODES].sort(() => Math.random() - 0.5);
+    return [shuffled[0], shuffled[1]];
   }
 
   PS.nextKind = 'adaptive';
 
-  // Sort styles by current win rate descending
-  const ranked = [...PIT_CODES].sort((a,b) => pitWR(b) - pitWR(a));
+  // Current ranking by Elo
+  const ranked = pitEloRanked();
+  const rankOf = {};
+  ranked.forEach((c, i) => { rankOf[c] = i; });
 
-  // Count how many times each pair has been compared
+  // Build pair-repeat counter
   const pairCount = {};
   PS.history.forEach(h => {
     const key = [h.codeA, h.codeB].sort().join('_');
     pairCount[key] = (pairCount[key] || 0) + 1;
   });
 
-  // Among all adjacent pairs in the ranking, pick the one with:
-  // smallest win-rate gap (most uncertain) + penalty for repeated comparisons
+  // Score every unique pair. Lower score = more attractive to sample.
   let bestA = null, bestB = null, bestScore = Infinity;
-  for (let i = 0; i < ranked.length - 1; i++) {
-    const a = ranked[i], b = ranked[i+1];
-    const gap = pitWR(a) - pitWR(b); // always >= 0 since sorted
-    const key = [a,b].sort().join('_');
-    const repeats = pairCount[key] || 0;
-    const score = gap + repeats * 0.4;
-    if (score < bestScore) { bestScore = score; bestA = a; bestB = b; }
-  }
-  return [bestA, bestB];
-}
-
-// At the cap, look for any adjacent pair in the current ranking that's tied on win rate.
-// If found, return them so we can force a head-to-head tie-breaker.
-function pitFindTieToBreak() {
-  const ranked = [...PIT_CODES].sort((a,b) => pitWR(b) - pitWR(a));
-  for (let i = 0; i < ranked.length - 1; i++) {
-    if (pitWR(ranked[i]) === pitWR(ranked[i+1])) {
-      return [ranked[i], ranked[i+1]];
+  for (let i = 0; i < PIT_CODES.length; i++) {
+    for (let j = i + 1; j < PIT_CODES.length; j++) {
+      const a = PIT_CODES[i], b = PIT_CODES[j];
+      const eloGap = Math.abs(PS.elo[a] - PS.elo[b]);
+      const importance = pitPairPriority(rankOf[a], rankOf[b]);
+      const key = [a, b].sort().join('_');
+      const repeats = pairCount[key] || 0;
+      // (importance × (1 + gap/200)) — small gap × low importance weight wins.
+      // The /200 normalizes Elo gap so that a 200-point gap doubles the score.
+      const score = importance * (1 + eloGap / 200) + repeats * PIT_REPEAT_PENALTY;
+      if (score < bestScore) {
+        bestScore = score; bestA = a; bestB = b;
+      }
     }
   }
-  return null;
+  return [bestA, bestB];
 }
 
 function pitIsSettled() {
   if (PS.round < PIT_MIN) return false;
   if (PS.round >= PIT_MAX) return true;
-  // Every style must have played at least 3 matches
-  if (!PIT_CODES.every(c => PS.matches[c] >= 3)) return false;
-  // All adjacent win-rate gaps must be >= 0.15
-  const ranked = [...PIT_CODES].sort((a,b) => pitWR(b) - pitWR(a));
-  for (let i = 0; i < ranked.length - 1; i++) {
-    if (pitWR(ranked[i]) - pitWR(ranked[i+1]) < 0.15) return false;
-  }
+  // Every style must have played at least PIT_MIN_MATCHES
+  if (!PIT_CODES.every(c => PS.matches[c] >= PIT_MIN_MATCHES)) return false;
+  // Required Elo gaps
+  const ranked = pitEloRanked();
+  const elo = PS.elo;
+  if (elo[ranked[0]] - elo[ranked[1]] < PIT_GAP_TOP12) return false;
+  if (elo[ranked[1]] - elo[ranked[2]] < PIT_GAP_TOP23) return false;
+  if (elo[ranked[3]] - elo[ranked[4]] < PIT_GAP_BOT45) return false;
   return true;
+}
+
+// ── BRADLEY-TERRY MLE (final scoring only) ─────────────────────────────────────
+// Iterative scaling. Solves for strengths p_i such that
+//   P(i beats j) = p_i / (p_i + p_j)
+// best fits the observed match history. Strengths are normalized so their
+// geometric mean is 1.
+
+function pitBradleyTerry(history, opts) {
+  opts = opts || {};
+  const maxIter = opts.maxIter || 200;
+  const tol     = opts.tol     || 1e-7;
+  const PRIOR   = 0.25;  // Laplace smoothing — 0.25 phantom wins per direction
+
+  // Build win matrix and pair-match-count matrix
+  const w = {};
+  const m = {};
+  PIT_CODES.forEach(a => {
+    w[a] = {}; m[a] = {};
+    PIT_CODES.forEach(b => {
+      if (a !== b) {
+        w[a][b] = PRIOR;
+        m[a][b] = 2 * PRIOR;
+      }
+    });
+  });
+  history.forEach(h => {
+    const a = h.codeA, b = h.codeB, win = h.winner;
+    const loser = (win === a) ? b : a;
+    w[win][loser] += 1;
+    m[a][b] += 1; m[b][a] += 1;
+  });
+
+  // Initialize all strengths at 1
+  const p = {};
+  PIT_CODES.forEach(c => { p[c] = 1.0; });
+
+  for (let iter = 0; iter < maxIter; iter++) {
+    const newP = {};
+    PIT_CODES.forEach(i => {
+      let winsI = 0, denom = 0;
+      PIT_CODES.forEach(j => {
+        if (j === i) return;
+        winsI += w[i][j];
+        denom += m[i][j] / (p[i] + p[j]);
+      });
+      newP[i] = denom > 0 ? winsI / denom : p[i];
+    });
+    // Normalize: divide by geometric mean
+    const logSum = PIT_CODES.reduce((s, c) => s + Math.log(newP[c]), 0);
+    const geoMean = Math.exp(logSum / PIT_CODES.length);
+    PIT_CODES.forEach(c => { newP[c] = newP[c] / geoMean; });
+    // Convergence check
+    let delta = 0;
+    PIT_CODES.forEach(c => { delta = Math.max(delta, Math.abs(newP[c] - p[c])); });
+    PIT_CODES.forEach(c => { p[c] = newP[c]; });
+    if (delta < tol) break;
+  }
+  return p;
 }
 
 function renderPit(codeA, codeB) {
@@ -1175,16 +1261,27 @@ function pitSel(ch) {
   const winner = ch === 'a' ? PS.codeA : PS.codeB;
   const loser  = ch === 'a' ? PS.codeB : PS.codeA;
 
-  // Record result
+  // Snapshot pre-update Elo so history reflects ratings at decision time
+  const eloA_before = PS.elo[PS.codeA];
+  const eloB_before = PS.elo[PS.codeB];
+
+  // Record raw counts
   PS.wins[winner]++;
   PS.matches[winner]++;
   PS.matches[loser]++;
+
+  // Elo update — incremental, applied to both players
+  const expectedWinner = 1 / (1 + Math.pow(10, (PS.elo[loser] - PS.elo[winner]) / 400));
+  const expectedLoser  = 1 - expectedWinner;
+  PS.elo[winner] += PIT_ELO_K * (1 - expectedWinner);
+  PS.elo[loser]  += PIT_ELO_K * (0 - expectedLoser);
 
   PS.history.push({
     round: PS.round + 1,
     codeA: PS.codeA, codeB: PS.codeB,
     winner, loser, rt_ms: rt,
-    wrA: pitWR(PS.codeA), wrB: pitWR(PS.codeB),
+    eloA_before, eloB_before,
+    eloA_after: PS.elo[PS.codeA], eloB_after: PS.elo[PS.codeB],
     kind: PS.nextKind,
   });
   PS.round++;
@@ -1211,14 +1308,23 @@ function pitPrev() {} // intentionally empty (button is hidden)
 
 function scorePit() {
   S.iA = PS.history; // full matchup log as the answer record
+
+  // Bradley-Terry final scoring — accounts for opponent strength symmetrically
+  const bt = pitBradleyTerry(PS.history);
+
   S.iScores = PIT_CODES
     .map(c => ({
-      style: CM[c], code: c,
-      wins: PS.wins[c], matches: PS.matches[c],
-      win_rate: PS.matches[c] > 0 ? +(PS.wins[c] / PS.matches[c]).toFixed(3) : 0,
+      style:        CM[c],
+      code:         c,
+      wins:         PS.wins[c],
+      matches:      PS.matches[c],
+      win_rate:     PS.matches[c] > 0 ? +(PS.wins[c] / PS.matches[c]).toFixed(3) : 0,
+      elo:          +PS.elo[c].toFixed(1),
+      bt_strength:  +bt[c].toFixed(4),
     }))
-    .sort((a,b) => b.win_rate - a.win_rate || b.wins - a.wins)
-    .map((s,i) => ({ ...s, rank: i+1 }));
+    .sort((a, b) => b.bt_strength - a.bt_strength)
+    .map((s, i) => ({ ...s, rank: i + 1 }));
+
   recordInstResult('pit');
   nextInstrument();
 }
