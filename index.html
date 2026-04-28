@@ -349,9 +349,10 @@
 <div class="screen active" id="screen-splash">
   <h1 id="splash-title">What's your conflict style?</h1>
   <div id="splash-body">
-    <p>This is an experimental assessment that figures out your dominant conflict styles by asking you to choose between pairs of statements. It adapts as you go, so it usually only takes around 4 minutes.</p>
-    <p><strong>There are no right or wrong answers — just go with your gut.</strong></p>
-    <p>Your responses help me validate the algorithm. Everything is anonymous; no accounts or sign-ins. If you're testing this for me, you'll get a chance to label your run on the next page.</p>
+    <p>This is an experimental assessment that figures out your dominant conflict-management styles by asking you to choose between two cards. Pick the description that sounds more like how you typically deal with conflict — arguments, disagreements, tension, etc. Even if neither is a perfect fit, go with the closer one.</p>
+    <p><strong>Everything is anonymous.</strong> No accounts or sign-ins. The next page lets you optionally enter a name if you want it on the final report — and if you're just trying it out, there's a "test run" option to flag your response.</p>
+    <p><em>There's no back button: once you select an answer, it's locked in.</em></p>
+    <div class="info">Takes about <strong>5 minutes.</strong> Go with your gut. Your first instinct is usually the most accurate.</div>
   </div>
   <div class="btn-row">
     <button class="btn btn-primary btn-lg" onclick="goTo('setup')">Begin →</button>
@@ -375,19 +376,6 @@
   </div>
 </div>
 
-<!-- ═══════════════════════ PIT INTRO ════════════════════════════════════════ -->
-<div class="screen" id="screen-pit-intro">
-  <span class="eyebrow">Part X of Y</span>
-  <h2>A vs B</h2>
-  <p>You will be presented with two cards per page. Pick the description that sounds more like how you typically deal with conflict (arguments, disagreements, tension, etc.). Even if neither is a perfect fit, go with the closer one.</p>
-  <p><strong>There are no right or wrong answers.</strong></p>
-  <p><em>There is no back button in this section. Once you make a selection, it is locked in.</em></p>
-  <div class="info">Takes about <strong>4 minutes.</strong> Go with your gut. Your first instinct is usually most accurate.</div>
-  <div class="btn-row">
-    <button class="btn btn-primary btn-lg" onclick="startPit()">Start →</button>
-  </div>
-</div>
-
 <!-- ═══════════════════════ PIT ═══════════════════════════════════════════════ -->
 <div class="screen" id="screen-pit">
   <span class="eyebrow">Part 2 of 2</span>
@@ -406,6 +394,15 @@
     <span></span>
     <button class="btn btn-primary" id="pit-next" onclick="pitNext()" style="display:none">Next →</button>
   </div>
+</div>
+
+<!-- ═══════════════════════ RANKING ══════════════════════════════════════════ -->
+<div class="screen" id="screen-ranking">
+  <span class="eyebrow">Part X of Y</span>
+  <h2>Rank these descriptions</h2>
+  <p style="font-size:0.9rem">Tap arrows to reorder (or drag on desktop) — <strong>most like you</strong> at the top, <strong>least like you</strong> at the bottom.</p>
+  <ul class="rank-list" id="rank-list"></ul>
+  <div class="btn-row end"><button class="btn btn-primary" onclick="finishRanking()">Submit →</button></div>
 </div>
 
 <!-- ═══════════════════════ SAVING ════════════════════════════════════════════ -->
@@ -494,7 +491,7 @@ function toggleLayout() {
 }
 
 // ── HISTORY API ───────────────────────────────────────────────────────────────
-const WAYPOINTS = new Set(['splash','setup','pit-intro']);
+const WAYPOINTS = new Set(['splash','setup']);
 
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -511,7 +508,7 @@ function goTo(id) {
 window.addEventListener('popstate', e => showScreen(e.state?.screen || 'splash'));
 
 function updateRail(id) {
-  const map = { splash:0, setup:5, 'pit-intro':10, saving:90, results:100 };
+  const map = { splash:0, setup:5, saving:90, results:100 };
   let p = map[id] ?? 0;
   if (id === 'ranking') p = 72 + Math.round((S.iIdx / 1) * 24);
   else if (id === 'pit')     p = 12 + Math.round(((PS ? PS.round : 0) / PIT_MAX) * 60);
@@ -651,7 +648,6 @@ const S = {
 function paintEyebrows() {
   const map = {
     'screen-setup':     'Part 1 of 3',
-    'screen-pit-intro': 'Part 2 of 3',
     'screen-pit':       'Part 2 of 3',
     'screen-ranking':   'Part 3 of 3',
   };
@@ -689,7 +685,7 @@ function nextInstrument() {
   S.currentInst = next;
   S.iA = []; S.iIdx = 0; S.iT = Date.now();
 
-  if (next === 'pit')      { showScreen('pit-intro'); return; }
+  if (next === 'pit')      { startPit(); return; }
   if (next === 'ranking')  { buildRanking(); showScreen('ranking'); return; }
 
   // Unknown instrument — skip
