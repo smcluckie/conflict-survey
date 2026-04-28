@@ -349,10 +349,10 @@
 <div class="screen active" id="screen-splash">
   <h1 id="splash-title">What's your conflict style?</h1>
   <div id="splash-body">
-    <p>This is an experimental assessment that figures out your dominant conflict-management styles by asking you to choose between two cards. Pick the description that sounds more like how you typically deal with conflict — arguments, disagreements, tension, etc. Even if neither is a perfect fit, go with the closer one.</p>
-    <p><strong>Everything is anonymous.</strong> No accounts or sign-ins. The next page lets you optionally enter a name if you want it on the final report — and if you're just trying it out, there's a "test run" option to flag your response.</p>
-    <p><em>There's no back button: once you select an answer, it's locked in.</em></p>
-    <div class="info">Takes about <strong>5 minutes.</strong> Go with your gut. Your first instinct is usually the most accurate.</div>
+    <p>This is an experimental assessment that figures out your dominant conflict-management styles by asking you to choose between two cards. Pick the description that sounds more like how you typically deal with conflict, arguments, disagreements, tension, etc. If neither is a perfect fit, go with the closer one.</p>
+    <p>Everything is anonymous. No accounts or sign-ins. The next page lets you enter a name if you want one for the final report. And if you're just trying it out, there's a "test run" option to flag your response.</p>
+    <p>There's no back button so once you select an answer, it's locked in.</p>
+    <div class="info">Takes about 5 minutes. Go with your gut. Your first instinct is usually the most accurate.</div>
   </div>
   <div class="btn-row">
     <button class="btn btn-primary btn-lg" onclick="goTo('setup')">Begin →</button>
@@ -363,12 +363,12 @@
 <div class="screen" id="screen-setup">
   <span class="eyebrow">A quick note</span>
   <h2>Before we start</h2>
-  <p>This is an experimental conflict-style assessment. You can take it anonymously — but if you're testing it for me (or just want to label your run), the optional fields below help me sort signal from noise.</p>
-  <label class="lbl" for="name-inp">Name or label <span style="font-weight:400;color:var(--text-3)">— optional</span></label>
+  <p>You can take it anonymously, but if you're testing it for me (or just want to label your run), the optional fields below help me filter out noise and bad data.</p>
+  <label class="lbl" for="name-inp">Name</label>
   <input class="inp" type="text" id="name-inp" placeholder="e.g. Scott, or leave blank" autocomplete="off" spellcheck="false">
   <label style="display:flex;align-items:flex-start;gap:0.6rem;margin-top:1rem;cursor:pointer;font-size:0.88rem;color:var(--text-2)">
     <input type="checkbox" id="test-chk" style="margin-top:0.2rem;cursor:pointer;accent-color:var(--accent)">
-    <span><strong>This is a test run.</strong> Check this if you're trying out the assessment to test it (so I can exclude this from real analysis).</span>
+    <span>Check if this is a test run or you're just clicking around, so I can exclude the entry from any future analysis.</span>
   </label>
   <div class="btn-row apart" style="margin-top:1.5rem">
     <button class="btn btn-ghost" onclick="goTo('splash')">← Back</button>
@@ -400,7 +400,7 @@
 <div class="screen" id="screen-ranking">
   <span class="eyebrow">Part X of Y</span>
   <h2>Rank these descriptions</h2>
-  <p style="font-size:0.9rem">Tap arrows to reorder (or drag on desktop) — <strong>most like you</strong> at the top, <strong>least like you</strong> at the bottom.</p>
+  <p style="font-size:0.9rem">Tap arrows to reorder or drag if you're on desktop: most like you at the top, least like you at the bottom.</p>
   <ul class="rank-list" id="rank-list"></ul>
   <div class="btn-row end"><button class="btn btn-primary" onclick="finishRanking()">Submit →</button></div>
 </div>
@@ -412,7 +412,7 @@
 
 <!-- ═══════════════════════ RESULTS ══════════════════════════════════════════ -->
 <div class="screen" id="screen-results">
-  <span class="eyebrow">Your Conflict Style Profile</span>
+  <span class="eyebrow" id="results-title">Your Conflict Style Profile</span>
   <h2>Your dominant styles</h2>
   <p style="font-size:0.87rem;margin-bottom:1.5rem">Based on your responses. Top styles shown first.</p>
   <div id="results-cards"></div>
@@ -516,6 +516,13 @@ function updateRail(id) {
 }
 
 const CM = { As:'Competing', Cp:'Collaborating', Rv:'Avoiding', Md:'Compromising', Fx:'Accommodating' };
+
+// Build the profile title. If the user entered a name, possessive it;
+// otherwise use the generic "Your". Used on results page eyebrow and in PDF.
+function profileTitle() {
+  const n = (S && S.name || '').trim();
+  return n ? `${n}'s Conflict Style Profile` : 'Your Conflict Style Profile';
+}
 const SI = {
   Collaborating: {
     tag:          'You work through conflict to find solutions that work for everyone.',
@@ -1178,6 +1185,10 @@ function renderResults() {
   const container = document.getElementById('results-cards');
   if (!container) return;
 
+  // Personalize the title with the user's name if provided.
+  const titleEl = document.getElementById('results-title');
+  if (titleEl) titleEl.textContent = profileTitle();
+
   const primaryKey = pickPrimaryInstrument();
   if (!primaryKey) {
     container.innerHTML = '<p style="color:var(--text-3)">No scoring results available.</p>';
@@ -1260,7 +1271,7 @@ function dlPDF(){
   doc.rect(0, 0, 210, 38, 'F');
   doc.setTextColor(255);
   doc.setFontSize(20); doc.setFont('helvetica','bold');
-  doc.text('Your Conflict Style Profile', 20, 17);
+  doc.text(profileTitle(), 20, 17);
   doc.setFontSize(9); doc.setFont('helvetica','normal');
   doc.text(`Generated ${new Date().toLocaleDateString()}  ·  conflict.scottmcluckie.com`, 20, 28);
 
