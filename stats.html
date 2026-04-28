@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conflict Style Stats</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:          #EDEAF6;
+      --bg-grad:     radial-gradient(ellipse at 55% -10%, rgba(91,79,232,0.1) 0%, transparent 60%), #EDEAF6;
+      --surface:     #F8F7FF;
+      --surface-2:   #E4E0F4;
+      --text:        #1A1830;
+      --text-2:      #4A4668;
+      --text-3:      #8A85A8;
+      --border:      #D8D3ED;
+      --accent:      #5B4FE8;
+      --accent-bg:   #EAE6FB;
+      --amber:       #C2690A;
+      --amber-bg:    #FBE9D5;
+      --green:       #16794F;
+      --green-bg:    #D7EFE2;
+      --red:         #B83A3A;
+      --radius:      14px;
+      --shadow-sm:   0 1px 3px rgba(26,24,48,0.06);
+      --shadow-md:   0 4px 16px rgba(26,24,48,0.1);
+      --font:        'Plus Jakarta Sans', -apple-system, system-ui, sans-serif;
+    }
+    [data-theme="dark"] {
+      --bg:          #0E0C20;
+      --bg-grad:     radial-gradient(ellipse at 55% -10%, rgba(124,111,245,0.18) 0%, transparent 60%), #0E0C20;
+      --surface:     #18162B;
+      --surface-2:   #221F38;
+      --text:        #F1EEFF;
+      --text-2:      #C2BDDD;
+      --text-3:      #8A85A8;
+      --border:      #2C2945;
+      --accent:      #7C6FF5;
+      --accent-bg:   #221F45;
+      --amber:       #F59E0B;
+      --amber-bg:    #3A2E1A;
+      --green:       #4ADE80;
+      --green-bg:    #1B3527;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font); background: var(--bg-grad); color: var(--text);
+      line-height: 1.6; min-height: 100vh; padding: 2rem 1rem;
+    }
+    .page { max-width: 880px; margin: 0 auto; }
+    h1 {
+      font-size: 1.75rem; letter-spacing: -0.02em; margin-bottom: 0.35rem;
+    }
+    .subtitle {
+      font-size: 0.9rem; color: var(--text-3); margin-bottom: 2rem;
+    }
+    .controls {
+      display: flex; gap: 0.75rem; align-items: center;
+      margin-bottom: 1.5rem; flex-wrap: wrap;
+    }
+    .toggle-btn {
+      padding: 0.45rem 0.9rem; font-family: var(--font);
+      font-size: 0.78rem; font-weight: 700;
+      background: var(--surface); border: 1.5px solid var(--border);
+      color: var(--text-2); border-radius: 8px; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .toggle-btn.on { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
+    .theme-btn {
+      margin-left: auto; padding: 0.4rem 0.75rem; font-family: var(--font);
+      font-size: 0.85rem; background: transparent; border: 1.5px solid var(--border);
+      color: var(--text-3); border-radius: 8px; cursor: pointer;
+    }
+
+    .stat-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem; margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.1rem 1.2rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .stat-label {
+      font-size: 0.65rem; font-weight: 800; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.45rem;
+    }
+    .stat-val {
+      font-size: 1.6rem; font-weight: 800; color: var(--text);
+      letter-spacing: -0.02em;
+    }
+    .stat-sub { font-size: 0.7rem; color: var(--text-3); margin-top: 0.25rem; }
+
+    .section { margin-bottom: 2.25rem; }
+    .section-title {
+      font-size: 0.7rem; font-weight: 800; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.85rem;
+    }
+    .panel {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.5rem; box-shadow: var(--shadow-sm);
+    }
+    .panel-title {
+      font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem;
+      letter-spacing: -0.01em;
+    }
+    .panel-sub {
+      font-size: 0.78rem; color: var(--text-3); margin-bottom: 1.25rem;
+      line-height: 1.5;
+    }
+
+    /* Bars */
+    .bar-row {
+      display: flex; align-items: center; gap: 0.7rem;
+      font-size: 0.85rem; padding: 0.45rem 0;
+    }
+    .bar-style {
+      min-width: 130px; color: var(--text-2); font-weight: 600;
+    }
+    .bar-track {
+      flex: 1; height: 7px; background: var(--surface-2);
+      border-radius: 4px; overflow: hidden;
+    }
+    .bar-fill {
+      height: 7px; border-radius: 4px;
+      background: var(--accent); transition: width 0.5s;
+    }
+    .bar-fill.amber { background: var(--amber); }
+    .bar-fill.green { background: var(--green); }
+    .bar-count {
+      min-width: 60px; text-align: right;
+      font-size: 0.78rem; color: var(--text-3);
+    }
+
+    /* Histogram */
+    .hist-row {
+      display: flex; align-items: center; gap: 0.6rem;
+      font-size: 0.78rem; padding: 0.25rem 0;
+    }
+    .hist-lbl { min-width: 110px; color: var(--text-3); font-weight: 600; }
+    .hist-track {
+      flex: 1; height: 6px; background: var(--surface-2);
+      border-radius: 3px; overflow: hidden;
+    }
+    .hist-fill {
+      height: 6px; border-radius: 3px;
+      background: var(--accent); transition: width 0.4s;
+    }
+    .hist-fill.cap { background: var(--amber); }
+    .hist-n { min-width: 28px; text-align: right; color: var(--text-3); font-size: 0.72rem; }
+
+    /* Two-column layout for distribution + thumbs */
+    .two-col {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 1rem; margin-bottom: 2.25rem;
+    }
+    .empty {
+      text-align: center; padding: 3rem 1rem; color: var(--text-3);
+      font-size: 0.9rem;
+    }
+    .footer {
+      margin-top: 3rem; padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.75rem; color: var(--text-3); text-align: center;
+    }
+    .footer a { color: var(--accent); }
+
+    @media (max-width: 700px) {
+      .stat-grid { grid-template-columns: 1fr 1fr; }
+      .two-col { grid-template-columns: 1fr; }
+      .bar-style { min-width: 105px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+  <h1>Conflict Style Stats</h1>
+  <p class="subtitle">Live aggregate data from anyone who's tried the assessment.</p>
+
+  <div class="controls">
+    <button class="toggle-btn" id="tests-toggle" onclick="toggleTests()">Show test runs</button>
+    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+  </div>
+
+  <div id="content">
+    <div class="empty">Loading…</div>
+  </div>
+
+  <div class="footer">
+    Aggregate data only. No individual responses are shown.
+    <br>Stats update every minute.
+  </div>
+</div>
+
+<script>
+'use strict';
+
+const STYLES = ['Competing','Collaborating','Compromising','Avoiding','Accommodating'];
+let includeTests = false;
+
+function initTheme() {
+  const saved = localStorage.getItem('cf_stats_theme');
+  const sys = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', saved || sys);
+}
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('cf_stats_theme', next);
+}
+function toggleTests() {
+  includeTests = !includeTests;
+  document.getElementById('tests-toggle').classList.toggle('on', includeTests);
+  document.getElementById('tests-toggle').textContent = includeTests
+    ? 'Hide test runs'
+    : 'Show test runs';
+  loadStats();
+}
+
+async function loadStats() {
+  const content = document.getElementById('content');
+  content.innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const r = await fetch('/api/stats-data' + (includeTests ? '?include_tests=1' : ''));
+    if (!r.ok) throw new Error('Server returned ' + r.status);
+    const data = await r.json();
+    render(data);
+  } catch (e) {
+    content.innerHTML = `<div class="empty">Couldn't load stats — ${e.message}</div>`;
+  }
+}
+
+function render(data) {
+  if (!data.total) {
+    document.getElementById('content').innerHTML =
+      '<div class="empty">No responses yet. Be the first to take the <a href="/" style="color:var(--accent)">assessment</a>!</div>';
+    return;
+  }
+
+  const meanRoundsStr = data.mean_rounds != null
+    ? data.mean_rounds.toFixed(1)
+    : '—';
+  const meanDurationStr = data.mean_duration_min != null
+    ? data.mean_duration_min.toFixed(1) + ' min'
+    : '—';
+  const capRatePct = Math.round((data.cap_rate || 0) * 100);
+
+  // Style distribution renderers
+  const renderDist = (dist, accent='') => {
+    const total = Object.values(dist).reduce((a,b)=>a+b, 0);
+    if (!total) return '<div class="empty" style="padding:1.5rem">No data yet.</div>';
+    const max = Math.max(...Object.values(dist));
+    return STYLES.map(s => {
+      const n = dist[s] || 0;
+      const pct = max > 0 ? Math.round(n / max * 100) : 0;
+      const sharePct = total > 0 ? Math.round(n / total * 100) : 0;
+      return `
+        <div class="bar-row">
+          <span class="bar-style">${s}</span>
+          <div class="bar-track"><div class="bar-fill ${accent}" style="width:${pct}%"></div></div>
+          <span class="bar-count">${n} · ${sharePct}%</span>
+        </div>`;
+    }).join('');
+  };
+
+  // Histogram renderer
+  const histMax = Math.max(...Object.values(data.stop_histogram || {}), 1);
+  const histHtml = Object.entries(data.stop_histogram || {}).map(([rd, n]) => {
+    const isCap = rd === '20';
+    return `
+      <div class="hist-row">
+        <span class="hist-lbl">${isCap ? `Round ${rd} (cap)` : `Round ${rd}`}</span>
+        <div class="hist-track"><div class="hist-fill ${isCap ? 'cap' : ''}" style="width:${Math.round(n/histMax*100)}%"></div></div>
+        <span class="hist-n">${n}</span>
+      </div>`;
+  }).join('');
+
+  // Thumbs
+  const thumbsHtml = (() => {
+    const t = data.thumbs || {};
+    const totalRated = (t.up || 0) + (t.side || 0) + (t.down || 0);
+    if (!totalRated) {
+      return '<div class="empty" style="padding:1.5rem">No feedback yet.</div>';
+    }
+    const max = Math.max(t.up, t.side, t.down, 1);
+    const item = (label, n, accent) => {
+      const pct = max > 0 ? Math.round(n / max * 100) : 0;
+      const share = totalRated > 0 ? Math.round(n / totalRated * 100) : 0;
+      return `
+        <div class="bar-row">
+          <span class="bar-style">${label}</span>
+          <div class="bar-track"><div class="bar-fill ${accent}" style="width:${pct}%"></div></div>
+          <span class="bar-count">${n} · ${share}%</span>
+        </div>`;
+    };
+    return item('👍 Accurate', t.up, 'green') +
+           item('👌 Mixed',    t.side, 'amber') +
+           item('👎 Not really', t.down, '');
+  })();
+
+  document.getElementById('content').innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Responses</div>
+        <div class="stat-val">${data.total}</div>
+        <div class="stat-sub">${data.include_tests ? 'incl. test runs' : 'excl. test runs'}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Mean Pit Rounds</div>
+        <div class="stat-val">${meanRoundsStr}</div>
+        <div class="stat-sub">median ${data.median_rounds ?? '—'}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Cap Rate</div>
+        <div class="stat-val" style="color:${capRatePct > 40 ? 'var(--amber)' : 'var(--text)'}">${capRatePct}%</div>
+        <div class="stat-sub">${data.cap_count}/${data.total} hit 20</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Duration</div>
+        <div class="stat-val">${meanDurationStr}</div>
+        <div class="stat-sub">total session</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-title">Primary Style</div>
+        <div class="panel-sub">Which style placed first across all profiles.</div>
+        ${renderDist(data.primary_distribution)}
+      </div>
+      <div class="panel">
+        <div class="panel-title">Secondary Style</div>
+        <div class="panel-sub">Which style placed second across all profiles.</div>
+        ${renderDist(data.secondary_distribution, 'amber')}
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-title">Least Dominant Style</div>
+        <div class="panel-sub">Which style placed last (5th) across all profiles.</div>
+        ${renderDist(data.least_distribution, 'green')}
+      </div>
+      <div class="panel">
+        <div class="panel-title">Feedback</div>
+        <div class="panel-sub">Did the profile feel accurate to participants?</div>
+        ${thumbsHtml}
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="panel">
+        <div class="panel-title">Pit Convergence — Stop-round Distribution</div>
+        <div class="panel-sub">How many rounds participants played before the algorithm stopped. Round 20 (amber) = the algorithm hit its cap without converging.</div>
+        ${histHtml || '<div class="empty">No data yet.</div>'}
+      </div>
+    </div>
+  `;
+}
+
+initTheme();
+loadStats();
+</script>
+</body>
+</html>
